@@ -64,6 +64,10 @@ def main():
         try:
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Advancing simulation by {interval} minutes...")
             
+            # Check disk for any external UI commands overriding state
+            solar_sim.load_state()
+            wind_sim.load_state()
+            
             # Fast-forward mode: Generate exactly 1 new step continuously
             next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
             next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)

@@ -46,8 +46,13 @@ class WindTurbineSimulator(BaseSimulator):
         vibration = 0.05 + (power / self.config['rated_power']) * 0.15 + np.random.normal(0, 0.02)
         vibration = max(0.01, vibration)
         
-        # Generator temperature
-        ambient_temp = 25 + 5 * np.sin(np.pi * (hour - 12) / 12)
+        # 2. Temperature Simulation (Diurnal & Seasonal)
+        season = self.state.get('season_mode', 'spring')
+        season_offset = 0.0
+        if season == 'summer': season_offset = 15.0
+        elif season == 'winter': season_offset = -10.0
+        
+        ambient_temp = 25 + season_offset + 5 * np.sin(np.pi * (hour - 12) / 12) + np.random.normal(0, 1)
         gen_temp = ambient_temp + (power / self.config['rated_power']) * 40 + np.random.normal(0, 2)
         gearbox_temp = gen_temp * 1.1 + np.random.normal(0, 3)
         

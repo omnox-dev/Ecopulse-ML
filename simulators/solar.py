@@ -27,8 +27,13 @@ class SolarPanelSimulator(BaseSimulator):
         # Add random cloud cover noise (10-20% flicker)
         irradiance *= (0.85 + 0.15 * np.random.random())
         
-        # 2. Temperature Model
-        ambient_temp = 28 + 7 * np.sin(np.pi * (hour - 9) / 12) + np.random.normal(0, 1)
+        # 2. Temperature Model (Diurnal & Seasonal)
+        season = self.state.get('season_mode', 'spring')
+        season_offset = 0.0
+        if season == 'summer': season_offset = 15.0
+        elif season == 'winter': season_offset = -10.0
+        
+        ambient_temp = 28 + season_offset + 7 * np.sin(np.pi * (hour - 9) / 12) + np.random.normal(0, 1)
         # Panels heat up with irradiance
         panel_temp = ambient_temp + (irradiance / 800) * 25 + np.random.normal(0, 2)
         inverter_temp = ambient_temp + (irradiance / 800) * 15 + np.random.normal(0, 1)
