@@ -62,8 +62,9 @@ def update_simulator_state(asset_file, key, value):
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Solar_panel_icon.svg/512px-Solar_panel_icon.svg.png", width=50)
     st.header("EcoPulse Execution Env")
-    auto_refresh = st.toggle("Live Auto-Refresh", value=True, help="Refreshes automatically, ticking the simulation forward.")
-    refresh_rate = st.slider("Tick Speed (sec)", min_value=1, max_value=10, value=3)
+    sim_running = st.toggle("▶️ RUN PHYSICS ENGINE (Play/Pause)", value=True, help="When ON, mathematical time marches forward.")
+    auto_refresh = st.toggle("Live Auto-Refresh Dashboard", value=True, help="Refreshes automatically, updating visuals.")
+    refresh_rate = st.slider("UI Refresh Speed (sec)", min_value=1, max_value=10, value=3)
     
     st.markdown("---")
     st.subheader("⚠️ Manual Anomaly Directives")
@@ -340,19 +341,20 @@ if not solar_csv.exists() or not wind_csv.exists():
 
 
 # Auto-Advance the Simulation Physics Clock By One Step
-solar_sim.load_state() 
-wind_sim.load_state()  
+if sim_running:
+    solar_sim.load_state() 
+    wind_sim.load_state()  
 
-next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
-next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)
+    next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
+    next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)
 
-solar_df_new = solar_sim.simulate_until(next_time_solar, interval_minutes=interval)
-wind_df_new = wind_sim.simulate_until(next_time_wind, interval_minutes=interval)
+    solar_df_new = solar_sim.simulate_until(next_time_solar, interval_minutes=interval)
+    wind_df_new = wind_sim.simulate_until(next_time_wind, interval_minutes=interval)
 
-if not solar_df_new.empty:
-    solar_df_new.to_csv(solar_csv, mode='a', index=False, header=False)
-if not wind_df_new.empty:
-    wind_df_new.to_csv(wind_csv, mode='a', index=False, header=False)
+    if not solar_df_new.empty:
+        solar_df_new.to_csv(solar_csv, mode='a', index=False, header=False)
+    if not wind_df_new.empty:
+        wind_df_new.to_csv(wind_csv, mode='a', index=False, header=False)
 
 # ==================== Data & Predictions Init ====================
 # Read from the newly updated CSV files and cast to ML models
