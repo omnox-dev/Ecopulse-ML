@@ -236,6 +236,9 @@ def get_alerts(df_wind):
         
     return alerts
 
+# ==================== Data & Predictions Init ====================
+df_wind, df_solar = generate_live_data_with_predictions()
+
 # ==================== Header & Global Status ====================
 
 c1, c2 = st.columns([3, 1])
@@ -253,8 +256,6 @@ with c2:
     """, unsafe_allow_html=True)
 
 # ==================== Main Operations View ====================
-
-df_wind, df_solar = generate_live_data_with_predictions()
 
 # ==================== Alert Banner ====================
 alerts = get_alerts(df_wind)
