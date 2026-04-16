@@ -37,8 +37,19 @@ st.set_page_config(
     page_title="EcoPulse AI | Operator Console",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
+
+# --- Sidebar Controls ---
+with st.sidebar:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Solar_panel_icon.svg/512px-Solar_panel_icon.svg.png", width=50)
+    st.header("EcoPulse AI Controls")
+    auto_refresh = st.toggle("Live Auto-Refresh", value=True, help="Automatically refreshes dashboard to digest simulator data.")
+    refresh_rate = st.slider("Refresh Interval (sec)", min_value=2, max_value=30, value=5)
+    st.markdown("---")
+    st.caption("Active Simulators:")
+    st.caption("🟢 Wind (WIND_001)")
+    st.caption("🟢 Solar (SOLAR_001)")
 
 # Custom CSS
 st.markdown("""
@@ -538,3 +549,8 @@ with tab_special:
 # ==================== Footer ====================
 st.markdown("---")
 st.caption(f"System Heartbeat: Online | AI Models: Active | Local Time: {datetime.now().strftime('%H:%M:%S')}")
+
+# ==================== Auto Refresh Logic ====================
+if auto_refresh:
+    time.sleep(refresh_rate)
+    st.rerun()
