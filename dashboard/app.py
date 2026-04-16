@@ -309,16 +309,34 @@ interval = 15 # 15 minutes of simulated time per tick
 
 # Initialize 7-day history if wiped or totally fresh
 if not solar_csv.exists() or not wind_csv.exists():
-    with st.spinner("Initializing 7-Day Asset Telemetry History..."):
-        historical_end = datetime.now() - timedelta(minutes=interval)
+    st.markdown("<br><br><h1 style='text-align: center; color: #ef4444;'>⚡ SIMULATOR OFFLINE</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #64748b;'>No telemetry databases found. Grid systems are currently dark.</h3>", unsafe_allow_html=True)
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+    
+    cb1, cb2, cb3 = st.columns([1, 2, 1])
+    with cb2:
+        st.info("ℹ️ **Action Required:** To begin the demonstration, you must initialize the physics engine. The system will internally generate 7-days of historical background operations leading up to your chosen start date to warm up the PyTorch LSTM Neural Networks.")
         
-        solar_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
-        solar_df = solar_sim.simulate_until(historical_end, interval_minutes=interval)
-        solar_df.to_csv(solar_csv, index=False)
+        start_date = st.date_input("Simulation Start Date", value=datetime.now())
+        start_time = st.time_input("Simulation Start Time", value=datetime.now().time())
         
-        wind_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
-        wind_df = wind_sim.simulate_until(historical_end, interval_minutes=interval)
-        wind_df.to_csv(wind_csv, index=False)
+        if st.button("🚀 BOOT SIMULATION ENGINE", type="primary", use_container_width=True):
+            historical_end = datetime.combine(start_date, start_time)
+            
+            with st.spinner(f"Booting Physics Engine... Generating historical telemetry leading up to {historical_end}..."):
+                solar_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
+                solar_df = solar_sim.simulate_until(historical_end, interval_minutes=interval)
+                solar_df.to_csv(solar_csv, index=False)
+                
+                wind_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
+                wind_df = wind_sim.simulate_until(historical_end, interval_minutes=interval)
+                wind_df.to_csv(wind_csv, index=False)
+                
+            st.success("✅ Databases Online. Telemetry verified. Rebooting interface...")
+            time.sleep(1)
+            st.rerun()
+            
+    st.stop() # Force stream stop here so the rest of the dashboard doesn't render until booted!
 
 
 # Auto-Advance the Simulation Physics Clock By One Step
