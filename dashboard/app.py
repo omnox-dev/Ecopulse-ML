@@ -212,6 +212,10 @@ def generate_live_data_with_predictions():
         # Fallback: physics-based efficiency estimate
         df_solar['Efficiency_Forecast'] = 22.0 + np.sin(np.arange(len(df_solar)) / 10) + np.random.normal(0, 0.2, len(df_solar))
 
+    # Mask Efficiency at Night
+    irr_col = 'irradiance' if 'irradiance' in df_solar.columns else 'Irradiance_W_m2'
+    df_solar.loc[df_solar[irr_col] < 10, 'Efficiency_Forecast'] = 0.0
+
     return df_wind, df_solar
 
 def get_alerts(df_wind):

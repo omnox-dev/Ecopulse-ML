@@ -7,7 +7,7 @@ class WindTurbineSimulator(BaseSimulator):
     
     def __init__(self, asset_id, config=None):
         default_config = {
-            'rated_power': 2500, # 2.5 MW
+            'rated_power': 2.5, # MW
             'rotor_diameter': 100, # meters
             'cut_in_speed': 3.5,
             'rated_speed': 12.0,
