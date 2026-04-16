@@ -1,0 +1,45 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+\title{\textbf{EcoPulse AI: Machine Learning Architecture Documentation}}
+\author{Omnox-Dev Internal Documentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+EcoPulse AI utilizes a dual-model hybrid architecture to govern renewable energy assets. Wind turbines require immediate, threshold-based fault classification based on physical non-linear vibrations, whereas solar arrays require long-term trajectory memory forecasting to measure voltage degradation over time. 
+
+\section{Failure Predictor (Wind Asset Analysis)}
+\subsection{Algorithm Selection}
+The Failure Predictor employs an ensemble tree model, utilizing either \textbf{XGBoost Classifier} or a fallback \textbf{Random Forest Classifier}. 
+Decision trees heavily excel in environments with stark, interacting non-linear bounds (e.g., a turbine is safe at high speeds and low temperatures, but unsafe at high speeds and high temperatures).
+
+\subsection{Implementation Specs}
+\begin{itemize}
+    \item \textbf{Framework:} \texttt{scikit-learn} and \texttt{xgboost}
+    \item \textbf{Input Vectors:} 10-dimensional scaled telemetry arrays including Rotor Speed, Wind Speed, Gearbox Temperature, and Vibration Level.
+    \item \textbf{Output Space:} Class probability mapping $\in [0.0, 1.0]$. The Dashboard triggers physical alert visualizers identically when $P_{failure} > 0.40$ (Warning) and $P_{failure} > 0.70$ (Critical).
+\end{itemize}
+
+\section{Efficiency Forecaster (Solar Asset Analysis)}
+\subsection{Algorithm Selection}
+Solar efficiency exhibits deep time-series dependency. For instance, thermal retention and degradation compounds over the day. To measure this, a \textbf{Long Short-Term Memory (LSTM)} sequence-to-sequence model is implemented natively in PyTorch. The model effectively prevents the vanishing gradient problem, allowing the network to "remember" morning irradiance levels when predicting late-evening performance drops.
+
+\subsection{Implementation Specs}
+\begin{itemize}
+    \item \textbf{Framework:} \texttt{PyTorch}
+    \item \textbf{Topology:} Multi-layer LSTM coupled to a dense Linear output head.
+    \item \textbf{Temporal Windowing:} \texttt{sequence\_length} $= 288$ (representing 2 days of 10-minute intervals).
+    \item \textbf{Loss Function:} Mean Squared Error (MSE), optimized via Adam.
+    \item \textbf{Security Consideration:} Weights are explicitly deserialized carefully handling Scikit-Learn \texttt{StandardScaler} bindings to accommodate PyTorch 2.6 \texttt{weights\_only} changes.
+\end{itemize}
+
+\end{document}

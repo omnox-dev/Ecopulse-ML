@@ -1,0 +1,49 @@
+digraph EcoPulseArchitecture {
+    rankdir=LR;
+    node [shape=box, style=filled, color=lightblue, fontname="Arial"];
+    edge [fontname="Arial", fontsize=10];
+
+    subgraph cluster_simulators {
+        label = "Simulation Engine (Physics Models)";
+        style = dashed;
+        color = slategray;
+        Wind [label="WindTurbineSimulator\n(Aerodynamics, Heat, Vibration)"];
+        Solar [label="SolarPanelSimulator\n(Irradiance, Temp, Efficiency)"];
+    }
+
+    subgraph cluster_ml {
+        label = "Machine Learning Pipeline (/src/models)";
+        style = dashed;
+        color = slategray;
+        Failure [label="FailurePredictor\n(Random Forest + XGBoost)"];
+        LSTM [label="EfficiencyForecaster\n(PyTorch LSTM Network)"];
+    }
+
+    subgraph cluster_ui {
+        label = "Unified Streamlit Dashboard (app.py)";
+        style = filled;
+        color = whitesmoke;
+        
+        Sidebar [label="Operator Sidebar UI\n(Anomaly & Climate Injection)"];
+        DataHandler [label="Atomic File States\n(state_*.json & *.csv)"];
+        Fragment [label="@st.fragment Loop\n(Fast-Forward Ticks)"];
+        Frontend [label="Plotly Rendering Engine\n(2D & 3D Visualization)"];
+    }
+
+    // Workflows
+    Sidebar -> DataHandler [label=" Manual Override Write \n(Atomic os.replace)"];
+    DataHandler -> Wind [label=" Reads JSON State"];
+    DataHandler -> Solar [label=" Reads JSON State"];
+    
+    Wind -> DataHandler [label=" Appends to wind_live.csv"];
+    Solar -> DataHandler [label=" Appends to solar_live.csv"];
+    
+    DataHandler -> Fragment [label=" Streamlit Auto-Reads"];
+    
+    Fragment -> Failure [label=" Passes Wind Telemetry"];
+    Fragment -> LSTM [label=" Passes Solar Trajectory"];
+    
+    Failure -> Frontend [label=" 0.0-1.0 Probability"];
+    LSTM -> Frontend [label=" Future Performance %"];
+    Fragment -> Frontend [label=" Physics Coordinates"];
+}

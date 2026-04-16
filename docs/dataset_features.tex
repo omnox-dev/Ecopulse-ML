@@ -1,0 +1,44 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\title{\textbf{EcoPulse AI: Dataset \& Features Specification}}
+\author{Data Engineering Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+Because high-fidelity, labeled predictive maintenance datasets for multi-million dollar energy assets are extremely proprietary, EcoPulse utilizes a mathematically rigorous deterministic Simulation Pipeline. The data generated mimics true field SCADA responses.
+
+\section{Dataset Generation Pipeline}
+The system continuously writes arrays directly to \texttt{wind\_live.csv} and \texttt{solar\_live.csv}. Each timestep records the absolute state of the machine at that exact environmental boundary. 
+
+\section{Wind Turbine Features Suite}
+Generated for a simulated 2.5 MW Turbine under standard and anomalous conditions.
+\begin{itemize}
+    \item \textbf{\texttt{timestamp}:} Chronological marker aligning with environment ticks.
+    \item \textbf{\texttt{wind\_speed} ($m/s$):} Simulated wind velocity using Weibull distribution logic with turbulence overlays.
+    \item \textbf{\texttt{rotor\_speed} ($RPM$):} Correlated directly to wind\_speed but subject to physical curtailment logic and stall limits.
+    \item \textbf{\texttt{power\_output} ($MW$):} Natively converted to Megawatts based on standard $Cp$ efficiency curves and density constraints.
+    \item \textbf{\texttt{vibration\_level} ($mm/s$):} Baseline physics vibration that scales exponentially when the 'Gearbox Anomaly' matrix is engaged.
+    \item \textbf{\texttt{gearbox\_temperature} \& \textbf{\texttt{generator\_temperature}} ($^{\circ}C$):} Modeled internal mechanical temperature. Subject to catastrophic thermal runaway under simulated load faults.
+    \item \textbf{\texttt{is\_fault}:} Binary label \texttt{[0, 1]} indicating explicitly generated mathematical failure conditions used for supervised training. 
+\end{itemize}
+
+\section{Solar Array Features Suite}
+Simulating massive parallel commercial PV panel grids tied to heavy duty inverters.
+\begin{itemize}
+    \item \textbf{\texttt{irradiance} ($W/m^2$):} The core driver calculated mathematically based on Diurnal tracking (sine-wave based day/night cycles) with random cloud cover dimming modifiers.
+    \item \textbf{\texttt{panel\_temperature} ($^{\circ}C$):} Tracks the ambient air temperature with solar absorption heating offsets. 
+    \item \textbf{\texttt{voltage} ($V$) \& \textbf{\texttt{current}} ($A$):} Core electrical constraints indicating internal cell health.
+    \item \textbf{\texttt{power\_output} ($MW$):} Global output factoring in thermal degradation ($P=IV$).
+    \item \textbf{\texttt{performance\_ratio}:} Target feature for the LSTM network representing the ratio of expected baseline output vs actual tracked output (factoring in dust storms or inverter failure voltage drops).
+\end{itemize}
+
+\end{document}

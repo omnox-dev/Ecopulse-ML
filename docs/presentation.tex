@@ -1,0 +1,83 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\title[EcoPulse AI]{EcoPulse AI}
+\subtitle{Predictive Intelligence for Renewable Energy Grids}
+\author{Team Omnox-Dev}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{The Problem: Blind Spots in the Grid}
+    \begin{itemize}
+        \item \textbf{Reactive Culture:} Maintenance occurs \textit{after} catastrophic breakdown (e.g., gearbox shattering).
+        \item \textbf{Heavy Losses:} Unexpected downtime in commercial wind turbines costs millions in ungenerated revenue.
+        \item \textbf{Invisible Degradation:} Solar panels drop in efficiency continuously due to heat/soiling without clear tracking.
+    \end{itemize}
+    \vspace{0.5cm}
+    \textit{We have thousands of sensors tracking raw data, but we lack the intelligence to predict tomorrow.}
+\end{frame}
+
+\begin{frame}{The Solution: EcoPulse AI}
+    A real-time Operator Console that ingests live physics telemetry and feeds it directly into proactive Neural Networks.
+    \vspace{0.5cm}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Features:}
+        \begin{itemize}
+            \item Real-Time Physics Simulator
+            \item Mechanical Failure Predictor (RF)
+            \item Trajectory Forecaster (LSTM)
+            \item Interactive 3D Spatial Maps
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \textbf{Value:}
+        \begin{itemize}
+            \item Orchestrates drone dispatch
+            \item Automates Curtailment
+            \item Prevents Equipment Fires
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{System Architecture}
+    \begin{itemize}
+        \item \textbf{Data Pipeline:} Physics models generate synthetic, highly realistic multidimensional datasets every fraction of a second.
+        \item \textbf{Machine Learning:} 
+        \begin{itemize}
+            \item \textbf{Wind:} Decision Tree / Random Forest evaluates non-linear thresholds like \textit{Vibration vs. Rotor Speed}.
+            \item \textbf{Solar:} PyTorch LSTM network evaluates historical memory to track \textit{Performance Ratios}.
+        \end{itemize}
+        \item \textbf{Concurrent Framework:} Atomic OS-level file swaps allow operators to inject "Threats" (Dust Storms, Heatwaves) natively into the UI.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Live Threat Injection Demo}
+    \begin{center}
+        \Large \textbf{Live Dashboard Transition}
+        \vspace{0.5cm} \\
+        \normalsize Watch the AI ensemble instantly recognize and flag injected Gearbox Thermal Anomalies in real time.
+    \end{center}
+\end{frame}
+
+\begin{frame}{Business Impact \& The Future}
+    \begin{itemize}
+        \item \textbf{Portability:} Can be immediately wrapped around any JSON/CSV outputting standard Industrial SCADA system.
+        \item \textbf{Cost Optimization:} Shifting from Reactive to Preventive maintenance saves up to 30\% in gross grid liability costs.
+        \item \textbf{Next Steps:} API integration to physical systems (Drone Dispatching, Motorised Tilt Angles).
+    \end{itemize}
+    \vspace{0.5cm}
+    \begin{center}
+        \textbf{Thank You.}
+    \end{center}
+\end{frame}
+
+\end{document}
