@@ -66,6 +66,12 @@ with st.sidebar:
     auto_refresh = st.toggle("Live Auto-Refresh Dashboard", value=True, help="Refreshes automatically, updating visuals.")
     refresh_rate = st.slider("UI Refresh Speed (sec)", min_value=1, max_value=10, value=3)
     
+    if st.button("🗑️ WIPE & RESET DATABASE", type="primary", use_container_width=True, help="Permanently deletes all data and reboots to the Offline Splash Screen."):
+        data_dir = PROJECT_ROOT / "data" / "simulated"
+        for f in [data_dir / "solar_live.csv", data_dir / "wind_live.csv"]:
+            if f.exists(): f.unlink()
+        st.rerun()
+    
     st.markdown("---")
     st.subheader("⚠️ Manual Anomaly Directives")
     st.caption("Change conditions dynamically. The ML dashboards will react instantly.")
