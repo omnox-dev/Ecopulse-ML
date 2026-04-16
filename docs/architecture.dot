@@ -1,49 +1,70 @@
 digraph EcoPulseArchitecture {
-    rankdir=LR;
-    node [shape=box, style=filled, color=lightblue, fontname="Arial"];
-    edge [fontname="Arial", fontsize=10];
+    rankdir=TB;
+    splines=ortho;
+    nodesep=0.8;
+    ranksep=0.8;
+    
+    node [shape=box, style="rounded,filled", fillcolor=lightblue, fontname="Helvetica", penwidth=1.5, margin=0.2];
+    edge [fontname="Helvetica", fontsize=10, color="#555555", penwidth=1.2];
+    
+    subgraph cluster_ui {
+        label = "Unified Streamlit Application (app.py) Environment";
+        fontname="Helvetica-Bold";
+        fontsize=14;
+        style=filled;
+        color="#F0F2F6";
+        
+        Sidebar [label="Operator Sidebar UI\n(Anomaly / Season Controls)", fillcolor="#FFDDC1"];
+        DataHandler [label="Atomic State Manager\n(state_*.json & *.csv)", fillcolor="#C1E1C1"];
+        Loop [label="Physics Auto-Tick Loop\n(st.rerun 3s Fast-Forward)", fillcolor="#E1D5E7"];
+        Frontend [label="Plotly Rendering Engine\n(2D Analytics & 3D Surfaces)", fillcolor="#D0D0E1"];
+    }
 
     subgraph cluster_simulators {
-        label = "Simulation Engine (Physics Models)";
-        style = dashed;
-        color = slategray;
-        Wind [label="WindTurbineSimulator\n(Aerodynamics, Heat, Vibration)"];
-        Solar [label="SolarPanelSimulator\n(Irradiance, Temp, Efficiency)"];
+        label = "Simulation Engine";
+        fontname="Helvetica-Bold";
+        style=dashed;
+        color="#8B93A5";
+        
+        Wind [label="WindTurbineSimulator\n(Aerodynamics, Heat, Vibration)", fillcolor="#B3E5FC"];
+        Solar [label="SolarPanelSimulator\n(Irradiance, Heat, Efficiency)", fillcolor="#FFF9C4"];
     }
 
     subgraph cluster_ml {
-        label = "Machine Learning Pipeline (/src/models)";
-        style = dashed;
-        color = slategray;
-        Failure [label="FailurePredictor\n(Random Forest + XGBoost)"];
-        LSTM [label="EfficiencyForecaster\n(PyTorch LSTM Network)"];
-    }
-
-    subgraph cluster_ui {
-        label = "Unified Streamlit Dashboard (app.py)";
-        style = filled;
-        color = whitesmoke;
+        label = "Machine Learning Pipeline";
+        fontname="Helvetica-Bold";
+        style=dashed;
+        color="#8B93A5";
         
-        Sidebar [label="Operator Sidebar UI\n(Anomaly & Climate Injection)"];
-        DataHandler [label="Atomic File States\n(state_*.json & *.csv)"];
-        Fragment [label="@st.fragment Loop\n(Fast-Forward Ticks)"];
-        Frontend [label="Plotly Rendering Engine\n(2D & 3D Visualization)"];
+        Failure [label="FailurePredictor\n(Ensemble: RF + XGBoost)", fillcolor="#F8CECC"];
+        LSTM [label="EfficiencyForecaster\n(PyTorch LSTM Network)", fillcolor="#F8CECC"];
     }
 
-    // Workflows
-    Sidebar -> DataHandler [label=" Manual Override Write \n(Atomic os.replace)"];
-    DataHandler -> Wind [label=" Reads JSON State"];
-    DataHandler -> Solar [label=" Reads JSON State"];
+    // Logical grouping to force vertical cascading
+    {rank=same; Sidebar; DataHandler;}
+    {rank=same; Wind; Solar; Loop;}
+    {rank=same; Failure; LSTM;}
+
+    // UI Action
+    Sidebar -> DataHandler [label=" Overrides (os.replace) "];
     
-    Wind -> DataHandler [label=" Appends to wind_live.csv"];
-    Solar -> DataHandler [label=" Appends to solar_live.csv"];
+    // Physics Loop Workflow
+    Loop -> Wind [label=" Triggers Step() "];
+    Loop -> Solar [label=" Triggers Step() "];
     
-    DataHandler -> Fragment [label=" Streamlit Auto-Reads"];
+    Wind -> DataHandler [label=" Appends to CSV "];
+    Solar -> DataHandler [label=" Appends to CSV "];
+    DataHandler -> Wind [dir=back, label=" Reads State "];
+    DataHandler -> Solar [dir=back, label=" Reads State "];
     
-    Fragment -> Failure [label=" Passes Wind Telemetry"];
-    Fragment -> LSTM [label=" Passes Solar Trajectory"];
+    DataHandler -> Loop [label=" Fetches Live Array "];
     
-    Failure -> Frontend [label=" 0.0-1.0 Probability"];
-    LSTM -> Frontend [label=" Future Performance %"];
-    Fragment -> Frontend [label=" Physics Coordinates"];
+    // ML Routing
+    Loop -> Failure [label=" Live Wind Metrics "];
+    Loop -> LSTM [label=" Solar Historical Vectors "];
+    
+    // Frontend Visualization
+    Failure -> Frontend [label=" 0-100% Risk Probability "];
+    LSTM -> Frontend [label=" Target Efficiency Target "];
+    Loop -> Frontend [label=" Raw Telemetry Coordinates "];
 }
