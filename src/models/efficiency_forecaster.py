@@ -537,7 +537,9 @@ class EfficiencyForecaster:
     
     def load(self, path: str) -> 'EfficiencyForecaster':
         """Load model from file."""
-        checkpoint = torch.load(path, map_location=self.device)
+        # Set weights_only=False because PyTorch 2.6+ defaults it to True
+        # and strict checking prevents loading the saved StandardScaler objects.
+        checkpoint = torch.load(path, map_location=self.device, weights_only=False)
         
         self.model_type = checkpoint['model_type']
         self.scaler = checkpoint['scaler']
