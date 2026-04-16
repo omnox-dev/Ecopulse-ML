@@ -32,6 +32,11 @@ from src.models.failure_predictor import FailurePredictor
 from src.models.efficiency_forecaster import EfficiencyForecaster
 from src.feature_engineering.feature_pipeline import FeaturePipeline
 
+# Import Simulators
+from simulators.solar import SolarPanelSimulator
+from simulators.wind import WindTurbineSimulator
+import json
+
 # Page configuration
 st.set_page_config(
     page_title="EcoPulse AI | Operator Console",
@@ -41,15 +46,50 @@ st.set_page_config(
 )
 
 # --- Sidebar Controls ---
+def update_simulator_state(asset_file, key, value):
+    path = PROJECT_ROOT / "simulators" / asset_file
+    if path.exists():
+        with open(path, 'r') as f:
+            state = json.load(f)
+        state[key] = value
+        with open(path, 'w') as f:
+            json.dump(state, f, indent=4)
+
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Solar_panel_icon.svg/512px-Solar_panel_icon.svg.png", width=50)
-    st.header("EcoPulse AI Controls")
-    auto_refresh = st.toggle("Live Auto-Refresh", value=True, help="Automatically refreshes dashboard to digest simulator data.")
-    refresh_rate = st.slider("Refresh Interval (sec)", min_value=2, max_value=30, value=5)
+    st.header("EcoPulse Execution Env")
+    auto_refresh = st.toggle("Live Auto-Refresh", value=True, help="Refreshes automatically, ticking the simulation forward.")
+    refresh_rate = st.slider("Tick Speed (sec)", min_value=1, max_value=10, value=3)
+    
     st.markdown("---")
-    st.caption("Active Simulators:")
-    st.caption("🟢 Wind (WIND_001)")
-    st.caption("🟢 Solar (SOLAR_001)")
+    st.subheader("⚠️ Manual Anomaly Directives")
+    st.caption("Change conditions dynamically. The ML dashboards will react instantly.")
+    
+    c1, c2 = st.columns(2)
+    current_wind = "Normal"
+    with c1:
+        st.write("**Wind Override**")
+        if st.button("🟢 Normal", key="ws_norm"): update_simulator_state("state_WIND_001.json", "anomaly_mode", "normal")
+        if st.button("🚨 Gearbox", key="ws_fail"): update_simulator_state("state_WIND_001.json", "anomaly_mode", "gearbox_fault")
+        if st.button("🛑 Grid Cut", key="ws_curt"): update_simulator_state("state_WIND_001.json", "anomaly_mode", "curtailment")
+        
+    with c2:
+        st.write("**Solar Override**")
+        if st.button("🟢 Normal", key="ss_norm"): update_simulator_state("state_SOLAR_001.json", "anomaly_mode", "normal")
+        if st.button("🔥 Inverter", key="ss_over"): update_simulator_state("state_SOLAR_001.json", "anomaly_mode", "inverter_overheat")
+        if st.button("🌪️ Dust Storm", key="ss_soil"): update_simulator_state("state_SOLAR_001.json", "anomaly_mode", "soiling")
+        
+    st.markdown("---")
+    st.subheader("🌍 Climate Bias")
+    if st.button("🌸 Spring (Mild)", key="cs_spr"):
+        update_simulator_state("state_WIND_001.json", "season_mode", "spring")
+        update_simulator_state("state_SOLAR_001.json", "season_mode", "spring")
+    if st.button("🌞 Summer Heat", key="cs_sum"):
+        update_simulator_state("state_WIND_001.json", "season_mode", "summer")
+        update_simulator_state("state_SOLAR_001.json", "season_mode", "summer")
+    if st.button("⛄ Winter Ice", key="cs_win"):
+        update_simulator_state("state_WIND_001.json", "season_mode", "winter")
+        update_simulator_state("state_SOLAR_001.json", "season_mode", "winter")
 
 # Custom CSS
 st.markdown("""
@@ -251,7 +291,48 @@ def get_alerts(df_wind):
         
     return alerts
 
+# ==================== Unified Run Logic (Simulator Tick) ====================
+# This runs locally alongside Streamlit, advancing the physical state of the assets mathematically each visual refresh!
+
+data_dir = PROJECT_ROOT / "data" / "simulated"
+data_dir.mkdir(parents=True, exist_ok=True)
+solar_csv = data_dir / "solar_live.csv"
+wind_csv = data_dir / "wind_live.csv"
+
+solar_sim = SolarPanelSimulator("SOLAR_001")
+wind_sim = WindTurbineSimulator("WIND_001")
+interval = 15 # 15 minutes of simulated time per tick
+
+# Initialize 7-day history if wiped or totally fresh
+if not solar_csv.exists() or not wind_csv.exists():
+    with st.spinner("Initializing 7-Day Asset Telemetry History..."):
+        historical_end = datetime.now() - timedelta(minutes=interval)
+        
+        solar_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
+        solar_df = solar_sim.simulate_until(historical_end, interval_minutes=interval)
+        solar_df.to_csv(solar_csv, index=False)
+        
+        wind_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
+        wind_df = wind_sim.simulate_until(historical_end, interval_minutes=interval)
+        wind_df.to_csv(wind_csv, index=False)
+
+# Auto-Advance the Simulation Physics Clock By One Step
+solar_sim.load_state() 
+wind_sim.load_state()  
+
+next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
+next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)
+
+solar_df_new = solar_sim.simulate_until(next_time_solar, interval_minutes=interval)
+wind_df_new = wind_sim.simulate_until(next_time_wind, interval_minutes=interval)
+
+if not solar_df_new.empty:
+    solar_df_new.to_csv(solar_csv, mode='a', index=False, header=False)
+if not wind_df_new.empty:
+    wind_df_new.to_csv(wind_csv, mode='a', index=False, header=False)
+
 # ==================== Data & Predictions Init ====================
+# Read from the newly updated CSV files and cast to ML models
 df_wind, df_solar = generate_live_data_with_predictions()
 
 # ==================== Header & Global Status ====================
