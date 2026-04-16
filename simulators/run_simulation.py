@@ -61,28 +61,34 @@ def main():
         print(f"  ✅ Generated {len(df)} historical points.")
 
     while True:
-        now = datetime.now()
-        print(f"[{now.strftime('%H:%M:%S')}] Checking for simulation updates...")
-        
-        # Simulate until current time
-        solar_df = solar_sim.simulate_until(now, interval_minutes=interval)
-        wind_df = wind_sim.simulate_until(now, interval_minutes=interval)
-        
-        # Save updates
-        if not solar_df.empty:
-            solar_df.to_csv(solar_csv, mode='a', index=False, header=not solar_csv.exists())
-            print(f"  ✅ Added {len(solar_df)} points to solar_live.csv")
-
-        if not wind_df.empty:
-            wind_df.to_csv(wind_csv, mode='a', index=False, header=not wind_csv.exists())
-            print(f"  ✅ Added {len(wind_df)} points to wind_live.csv")
+        try:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Advancing simulation by {interval} minutes...")
             
-        if solar_df.empty and wind_df.empty:
-            print("  💤 No new steps needed.")
+            # Fast-forward mode: Generate exactly 1 new step continuously
+            next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
+            next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)
+            
+            solar_df = solar_sim.simulate_until(next_time_solar, interval_minutes=interval)
+            wind_df = wind_sim.simulate_until(next_time_wind, interval_minutes=interval)
+        
+            # Save updates
+            if not solar_df.empty:
+                solar_df.to_csv(solar_csv, mode='a', index=False, header=not solar_csv.exists())
+                print(f"  ✅ Added {len(solar_df)} points to solar_live.csv")
 
-        # Wait for next simulation cycle (e.g., 60 seconds)
-        print("Waiting 60 seconds...")
-        time.sleep(60)
+            if not wind_df.empty:
+                wind_df.to_csv(wind_csv, mode='a', index=False, header=not wind_csv.exists())
+                print(f"  ✅ Added {len(wind_df)} points to wind_live.csv")
+            
+            # Sleep briefly so the dashboard updates look 'live' but fast-paced
+            time.sleep(3)
+            
+        except KeyboardInterrupt:
+            print("\n🛑 Simulation stopped by user.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"⚠️ Error during simulation tick: {e}")
+            time.sleep(3)
 
 if __name__ == "__main__":
     main()
