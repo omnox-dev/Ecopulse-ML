@@ -35,6 +35,11 @@ class BaseSimulator(ABC):
         os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
         with open(self.state_file, 'w') as f:
             json.dump(self.state, f, indent=4)
+            
+    def set_anomaly_mode(self, mode: str):
+        """Set the active simulation mode (normal or an anomaly type)."""
+        self.state['anomaly_mode'] = mode
+        self.save_state()
 
     @abstractmethod
     def generate_step(self, timestamp):

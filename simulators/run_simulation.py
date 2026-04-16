@@ -1,6 +1,7 @@
 import sys
 import time
 import os
+import argparse
 import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -14,11 +15,26 @@ from simulators.solar import SolarPanelSimulator
 from simulators.wind import WindTurbineSimulator
 
 def main():
-    print("🚀 Starting EcoPulse Asset Simulation System...")
+    parser = argparse.ArgumentParser(description="Run EcoPulse Asset Simulation")
+    parser.add_argument("--solar-mode", type=str, default="normal", help="Solar mode: normal, inverter_overheat, soiling, offline")
+    parser.add_argument("--wind-mode", type=str, default="normal", help="Wind mode: normal, gearbox_fault, sensor_drift, curtailment")
+    parser.add_argument("--interval", type=int, default=15, help="Simulation time step in minutes (default 15)")
+    args = parser.parse_args()
+
+    print(f"🚀 Starting EcoPulse Asset Simulation System...")
+    print(f"   - Solar Mode: {args.solar_mode}")
+    print(f"   - Wind Mode:  {args.wind_mode}")
+    print(f"   - Temp Step:  {args.interval} mins")
     
     # Initialize Simulators
     solar_sim = SolarPanelSimulator("SOLAR_001")
     wind_sim = WindTurbineSimulator("WIND_001")
+    
+    # Apply modes
+    solar_sim.set_anomaly_mode(args.solar_mode)
+    wind_sim.set_anomaly_mode(args.wind_mode)
+    
+    interval = args.interval
     
     # Ensure data directory exists (absolute path — works from any CWD)
     data_dir = PROJECT_ROOT / "data" / "simulated"
@@ -30,17 +46,17 @@ def main():
     # Check for initial data need
     if not solar_csv.exists():
         print("📊 No existing solar data. Generating 7 days history...")
-        historical_end = datetime.now() - timedelta(minutes=15)
+        historical_end = datetime.now() - timedelta(minutes=interval)
         solar_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
-        df = solar_sim.simulate_until(historical_end)
+        df = solar_sim.simulate_until(historical_end, interval_minutes=interval)
         df.to_csv(solar_csv, index=False)
         print(f"  ✅ Generated {len(df)} historical points.")
 
     if not wind_csv.exists():
         print("📊 No existing wind data. Generating 7 days history...")
-        historical_end = datetime.now() - timedelta(minutes=15)
+        historical_end = datetime.now() - timedelta(minutes=interval)
         wind_sim.state['last_timestamp'] = (historical_end - timedelta(days=7)).isoformat()
-        df = wind_sim.simulate_until(historical_end)
+        df = wind_sim.simulate_until(historical_end, interval_minutes=interval)
         df.to_csv(wind_csv, index=False)
         print(f"  ✅ Generated {len(df)} historical points.")
 
@@ -48,9 +64,9 @@ def main():
         now = datetime.now()
         print(f"[{now.strftime('%H:%M:%S')}] Checking for simulation updates...")
         
-        # Simulate until current time (15 min intervals by default)
-        solar_df = solar_sim.simulate_until(now)
-        wind_df = wind_sim.simulate_until(now)
+        # Simulate until current time
+        solar_df = solar_sim.simulate_until(now, interval_minutes=interval)
+        wind_df = wind_sim.simulate_until(now, interval_minutes=interval)
         
         # Save updates
         if not solar_df.empty:

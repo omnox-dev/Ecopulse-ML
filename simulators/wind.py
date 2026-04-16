@@ -57,6 +57,23 @@ class WindTurbineSimulator(BaseSimulator):
         else:
             pitch_angle = 0
             
+        # --- APPLIED ANOMALIES ---
+        anomaly_mode = self.state.get('anomaly_mode', 'normal')
+        is_fault = 0
+        
+        if anomaly_mode == 'gearbox_fault':
+            vibration *= 4.5  # Critical vibration
+            gearbox_temp += 35.0  # Overheating
+            is_fault = 1
+        elif anomaly_mode == 'sensor_drift':
+            vibration += 0.5 + np.random.normal(0, 0.1) # Unnatural drift
+            gen_temp -= 20.0 # Crazy unnatural temp reading
+            is_fault = 1
+        elif anomaly_mode == 'curtailment':
+            power *= 0.2
+            rotor_speed *= 0.6
+            is_fault = 1
+
         return {
             'asset_id': self.asset_id,
             'timestamp': timestamp.isoformat(),
@@ -68,5 +85,5 @@ class WindTurbineSimulator(BaseSimulator):
             'gearbox_temperature': round(float(gearbox_temp), 1),
             'vibration_level': round(float(vibration), 3),
             'ambient_temperature': round(float(ambient_temp), 1),
-            'is_fault': 0
+            'is_fault': is_fault
         }

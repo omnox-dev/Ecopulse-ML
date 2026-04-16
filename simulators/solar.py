@@ -48,6 +48,22 @@ class SolarPanelSimulator(BaseSimulator):
         
         power_output = expected_power * degradation * (0.95 + 0.1 * np.random.random())
         
+        # --- APPLIED ANOMALIES ---
+        anomaly_mode = self.state.get('anomaly_mode', 'normal')
+        is_fault = 0
+        
+        if anomaly_mode == 'inverter_overheat':
+            inverter_temp += 45.0 + np.random.normal(0, 5)  # Spike temperature
+            power_output *= 0.6  # Efficiency throttling
+            is_fault = 1
+        elif anomaly_mode == 'soiling':
+            # Severe dust storm coverage
+            power_output *= 0.5  
+            is_fault = 1
+        elif anomaly_mode == 'offline':
+            power_output = 0.0
+            is_fault = 1
+            
         current = power_output / max(1.0, voltage)
         pr = power_output / max(1.0, expected_power)
 
@@ -63,5 +79,5 @@ class SolarPanelSimulator(BaseSimulator):
             'inverter_temperature': round(float(inverter_temp), 1),
             'ambient_temperature': round(float(ambient_temp), 1),
             'irradiance': round(float(irradiance), 0),
-            'is_fault': 0 # External logic can override this
+            'is_fault': is_fault
         }
