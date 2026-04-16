@@ -1,0 +1,961 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Color definitions
+\definecolor{primarycolor}{RGB}{0,102,204}
+\definecolor{secondarycolor}{RGB}{51,51,51}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{Predictive Maintenance for Renewable Infrastructure}}
+\fancyhead[R]{\textit{Project Plan}}
+\fancyfoot[C]{\thepage}
+
+% Title formatting
+\titleformat{\section}{\Large\bfseries\color{primarycolor}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{secondarycolor}}{\thesubsection}{1em}{}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primarycolor,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Predictive Maintenance Project Plan},
+    pdfpagemode=FullScreen,
+}
+
+\begin{document}
+
+% Title Page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Predictive Maintenance for Renewable Infrastructure\par}
+    \vspace{1cm}
+    {\Large\itshape Machine Learning-Based Solar Panel Monitoring System\par}
+    \vspace{2cm}
+    
+    \begin{tcolorbox}[colback=primarycolor!5!white,colframe=primarycolor!75!black,title=Project Overview]
+    An intelligent predictive maintenance system leveraging advanced machine learning techniques to monitor, analyze, and predict failures in renewable energy infrastructure, with a primary focus on solar panel installations.
+    \end{tcolorbox}
+    
+    \vspace{2cm}
+    
+    {\Large\textbf{Dubai Hackathon 2026}\par}
+    \vspace{0.5cm}
+    {\large Prepared: February 8, 2026\par}
+    
+    \vfill
+    
+    {\large\textit{Comprehensive Project Implementation Plan}\par}
+\end{titlepage}
+
+% Table of Contents
+\tableofcontents
+\newpage
+
+% Executive Summary
+\section{Executive Summary}
+
+\subsection{Project Vision}
+This project aims to revolutionize renewable energy infrastructure maintenance through the application of cutting-edge machine learning and artificial intelligence technologies. By implementing predictive analytics, we enable proactive maintenance strategies that minimize downtime, reduce operational costs, and maximize energy production efficiency.
+
+\subsection{Strategic Objectives}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Early Fault Detection}: Implement real-time anomaly detection systems capable of identifying equipment degradation before critical failures occur.
+    \item \textbf{Predictive Analytics}: Develop accurate failure prediction models with 7-day forecasting capabilities.
+    \item \textbf{Efficiency Optimization}: Create time-series forecasting models to predict and optimize energy production efficiency.
+    \item \textbf{Operational Intelligence}: Provide actionable insights through an intuitive dashboard and API infrastructure.
+    \item \textbf{Scalability}: Design a system architecture capable of monitoring thousands of distributed renewable energy assets.
+\end{enumerate}
+
+\subsection{Key Deliverables}
+\begin{itemize}[leftmargin=*]
+    \item Comprehensive synthetic data generation framework
+    \item Advanced feature engineering pipeline
+    \item Multi-model machine learning ensemble (Anomaly Detection, Failure Prediction, Efficiency Forecasting)
+    \item RESTful API backend with FastAPI
+    \item Interactive real-time monitoring dashboard
+    \item Complete testing suite and documentation
+\end{itemize}
+
+\newpage
+
+\section{Technical Architecture}
+
+\subsection{System Overview}
+The system follows a modular, microservices-inspired architecture with clear separation of concerns across data generation, feature engineering, model training, API services, and visualization layers.
+
+\subsection{Technology Stack}
+
+\subsubsection{Core Technologies}
+\begin{longtable}{p{0.25\textwidth} p{0.65\textwidth}}
+\toprule
+\textbf{Category} & \textbf{Technologies} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\tablename\ \thetable\ -- \textit{Continued from previous page}} \\
+\toprule
+\textbf{Category} & \textbf{Technologies} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{\textit{Continued on next page}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Programming Language & Python 3.10+ \\
+\midrule
+Data Processing & NumPy ($\geq$1.24.0), Pandas ($\geq$2.0.0), SciPy ($\geq$1.10.0) \\
+\midrule
+Machine Learning & scikit-learn ($\geq$1.3.0), XGBoost ($\geq$2.0.0), PyTorch ($\geq$2.0.0) \\
+\midrule
+API Framework & FastAPI ($\geq$0.104.0), Uvicorn ($\geq$0.24.0), Pydantic ($\geq$2.5.0) \\
+\midrule
+Visualization & Streamlit ($\geq$1.28.0), Plotly ($\geq$5.18.0) \\
+\midrule
+Testing & pytest ($\geq$7.4.0), pytest-asyncio ($\geq$0.21.0), httpx ($\geq$0.25.0) \\
+\midrule
+Utilities & python-dotenv ($\geq$1.0.0), tqdm ($\geq$4.66.0), joblib ($\geq$1.3.0) \\
+\end{longtable}
+
+\subsection{Project Structure}
+\begin{verbatim}
+predictive-maintenance/
+├── data/                       # Generated datasets
+│   ├── sensor_data.csv
+│   └── weather_data.csv
+├── src/
+│   ├── data_generation/        # Synthetic data generators
+│   │   ├── sensor_generator.py
+│   │   ├── weather_generator.py
+│   │   └── generate_all.py
+│   ├── feature_engineering/    # Feature extraction
+│   │   └── feature_pipeline.py
+│   ├── models/                 # ML models
+│   │   ├── anomaly_detector.py
+│   │   ├── failure_predictor.py
+│   │   ├── efficiency_forecaster.py
+│   │   └── train_all.py
+│   ├── api/                    # FastAPI backend
+│   │   └── main.py
+│   └── utils/                  # Helper functions
+│       └── data_loader.py
+├── dashboard/                  # Streamlit app
+│   └── app.py
+├── tests/                      # Unit tests
+├── models/                     # Saved model files
+└── requirements.txt            # Dependencies
+\end{verbatim}
+
+\newpage
+
+\section{Implementation Phases}
+
+\subsection{Phase 1: Data Generation and Preparation}
+
+\subsubsection{Objectives}
+Generate realistic synthetic datasets that accurately simulate real-world sensor readings and environmental conditions for solar panel installations.
+
+\subsubsection{Components}
+
+\paragraph{Sensor Data Generator}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Purpose}: Simulate multi-sensor readings from solar panel installations
+    \item \textbf{Data Points}:
+    \begin{itemize}
+        \item Voltage output (V)
+        \item Current output (A)
+        \item Power generation (W)
+        \item Panel temperature (°C)
+        \item Vibration levels (mm/s)
+        \item Dust accumulation index (0-100)
+    \end{itemize}
+    \item \textbf{Temporal Resolution}: 15-minute intervals
+    \item \textbf{Dataset Size}: 1 year of historical data per asset
+    \item \textbf{Anomaly Injection}: Programmatic insertion of realistic fault patterns (degradation, sudden failures, intermittent issues)
+\end{itemize}
+
+\paragraph{Weather Data Generator}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Purpose}: Simulate environmental conditions affecting solar panel performance
+    \item \textbf{Data Points}:
+    \begin{itemize}
+        \item Solar irradiance (W/m²)
+        \item Ambient temperature (°C)
+        \item Humidity (\%)
+        \item Wind speed (m/s)
+        \item Precipitation (mm)
+        \item Cloud cover (\%)
+    \end{itemize}
+    \item \textbf{Correlation}: Synchronized with sensor data to reflect realistic environmental impact
+    \item \textbf{Seasonal Patterns}: Incorporation of seasonal variations and weather patterns
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{enumerate}
+    \item \texttt{sensor\_data.csv}: Comprehensive sensor readings dataset
+    \item \texttt{weather\_data.csv}: Correlated weather conditions dataset
+    \item Data generation scripts with configurable parameters
+    \item Data validation and quality assurance reports
+\end{enumerate}
+
+\subsubsection{Timeline}
+\textbf{Duration}: 3-5 days
+
+\subsection{Phase 2: Feature Engineering}
+
+\subsubsection{Objectives}
+Transform raw sensor and weather data into meaningful features that enhance model performance and predictive accuracy.
+
+\subsubsection{Feature Categories}
+
+\paragraph{Statistical Features}
+\begin{itemize}[leftmargin=*]
+    \item Rolling statistics (mean, median, std, min, max) over multiple time windows (1h, 6h, 24h)
+    \item Rate of change calculations
+    \item Percentile-based features (25th, 75th, 95th)
+\end{itemize}
+
+\paragraph{Temporal Features}
+\begin{itemize}[leftmargin=*]
+    \item Time-based encodings (hour, day of week, month, season)
+    \item Cyclical transformations using sine/cosine encoding
+    \item Peak production hours identification
+    \item Day/night cycle indicators
+\end{itemize}
+
+\paragraph{Domain-Specific Features}
+\begin{itemize}[leftmargin=*]
+    \item Power efficiency ratio: $\eta = \frac{P_{actual}}{P_{theoretical}}$
+    \item Temperature-normalized output
+    \item Degradation rate indicators
+    \item Performance deviation from expected baseline
+    \item Correlation between voltage and current
+\end{itemize}
+
+\paragraph{Lag Features}
+\begin{itemize}[leftmargin=*]
+    \item Historical values at t-1, t-6, t-24 (hours)
+    \item Moving averages and exponential smoothing
+    \item Trend indicators
+\end{itemize}
+
+\subsubsection{Feature Selection}
+\begin{itemize}[leftmargin=*]
+    \item Correlation analysis to remove redundant features
+    \item Feature importance ranking using tree-based models
+    \item Variance threshold filtering
+    \item Recursive feature elimination (RFE)
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{enumerate}
+    \item Feature engineering pipeline (\texttt{feature\_pipeline.py})
+    \item Feature importance analysis report
+    \item Engineered feature datasets
+    \item Feature documentation and rationale
+\end{enumerate}
+
+\subsubsection{Timeline}
+\textbf{Duration}: 4-6 days
+
+\newpage
+
+\subsection{Phase 3: Model Development}
+
+\subsubsection{Model 1: Anomaly Detection}
+
+\paragraph{Objective}
+Identify unusual patterns and early signs of equipment degradation in real-time sensor data.
+
+\paragraph{Methodology}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Ensemble Approach}: Combination of Isolation Forest and Autoencoder
+    \item \textbf{Isolation Forest}:
+    \begin{itemize}
+        \item Unsupervised learning algorithm
+        \item Effective for high-dimensional data
+        \item Fast training and inference
+        \item Contamination parameter tuned to expected anomaly rate
+    \end{itemize}
+    \item \textbf{Autoencoder}:
+    \begin{itemize}
+        \item Neural network architecture (PyTorch)
+        \item Learns compressed representation of normal behavior
+        \item Reconstruction error as anomaly score
+        \item Architecture: Input → Encoder (128→64→32) → Decoder (32→64→128) → Output
+    \end{itemize}
+    \item \textbf{Ensemble Strategy}: Weighted voting based on validation performance
+\end{itemize}
+
+\paragraph{Performance Metrics}
+\begin{itemize}[leftmargin=*]
+    \item Precision, Recall, F1-Score
+    \item Area Under ROC Curve (AUC-ROC)
+    \item False Positive Rate (critical for operational acceptance)
+    \item Detection latency
+\end{itemize}
+
+\paragraph{Deliverables}
+\begin{enumerate}
+    \item Trained anomaly detection models
+    \item Model evaluation reports
+    \item Threshold optimization analysis
+    \item Inference pipeline
+\end{enumerate}
+
+\subsubsection{Model 2: Failure Prediction}
+
+\paragraph{Objective}
+Predict the probability of equipment failure within the next 7 days.
+
+\paragraph{Methodology}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Binary Classification Problem}: Failure vs. No Failure
+    \item \textbf{Ensemble Models}:
+    \begin{itemize}
+        \item Random Forest Classifier
+        \begin{itemize}
+            \item Robust to overfitting
+            \item Handles non-linear relationships
+            \item Provides feature importance
+            \item 100-500 trees with max depth tuning
+        \end{itemize}
+        \item XGBoost Classifier
+        \begin{itemize}
+            \item Gradient boosting framework
+            \item Superior performance on structured data
+            \item Built-in regularization
+            \item Hyperparameter optimization via grid search
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Class Imbalance Handling}:
+    \begin{itemize}
+        \item SMOTE (Synthetic Minority Over-sampling Technique)
+        \item Class weight adjustment
+        \item Stratified cross-validation
+    \end{itemize}
+    \item \textbf{Temporal Validation}: Time-series split to prevent data leakage
+\end{itemize}
+
+\paragraph{Performance Metrics}
+\begin{itemize}[leftmargin=*]
+    \item Precision-Recall curve (emphasis on recall for critical failures)
+    \item Confusion matrix analysis
+    \item Cost-sensitive evaluation (false negatives more costly than false positives)
+    \item Calibration curve for probability estimates
+\end{itemize}
+
+\paragraph{Deliverables}
+\begin{enumerate}
+    \item Trained failure prediction models
+    \item Model comparison and selection report
+    \item Probability calibration analysis
+    \item Feature importance rankings
+\end{enumerate}
+
+\subsubsection{Model 3: Efficiency Forecasting}
+
+\paragraph{Objective}
+Forecast solar panel efficiency trends for the next 7-30 days to optimize maintenance scheduling and energy production planning.
+
+\paragraph{Methodology}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Time Series Forecasting}: Sequence-to-sequence prediction
+    \item \textbf{Recurrent Neural Networks}:
+    \begin{itemize}
+        \item LSTM (Long Short-Term Memory)
+        \begin{itemize}
+            \item Captures long-term dependencies
+            \item Mitigates vanishing gradient problem
+            \item 2-3 stacked layers with dropout
+        \end{itemize}
+        \item GRU (Gated Recurrent Unit)
+        \begin{itemize}
+            \item Simpler architecture than LSTM
+            \item Faster training
+            \item Comparable performance
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Input Sequence Length}: 7-14 days of historical data
+    \item \textbf{Output}: Multi-step forecast (7-30 days ahead)
+    \item \textbf{Training Strategy}:
+    \begin{itemize}
+        \item Teacher forcing during training
+        \item Sliding window approach
+        \item Early stopping with validation loss monitoring
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Performance Metrics}
+\begin{itemize}[leftmargin=*]
+    \item Mean Absolute Error (MAE)
+    \item Root Mean Squared Error (RMSE)
+    \item Mean Absolute Percentage Error (MAPE)
+    \item R² Score
+    \item Forecast horizon-specific accuracy
+\end{itemize}
+
+\paragraph{Deliverables}
+\begin{enumerate}
+    \item Trained LSTM/GRU models
+    \item Forecast accuracy analysis
+    \item Model architecture documentation
+    \item Inference optimization
+\end{enumerate}
+
+\subsubsection{Timeline}
+\textbf{Duration}: 10-14 days (parallel development of all three models)
+
+\newpage
+
+\subsection{Phase 4: API Development}
+
+\subsubsection{Objectives}
+Create a robust, scalable RESTful API that serves model predictions and provides system monitoring capabilities.
+
+\subsubsection{API Architecture}
+
+\paragraph{Framework}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{FastAPI}: Modern, high-performance Python web framework
+    \item \textbf{Asynchronous Support}: Non-blocking I/O for concurrent requests
+    \item \textbf{Automatic Documentation}: OpenAPI (Swagger) and ReDoc
+    \item \textbf{Data Validation}: Pydantic models for request/response validation
+\end{itemize}
+
+\paragraph{Core Endpoints}
+
+\begin{longtable}{p{0.15\textwidth} p{0.35\textwidth} p{0.4\textwidth}}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\tablename\ \thetable\ -- \textit{Continued from previous page}} \\
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\textit{Continued on next page}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+POST & \texttt{/predict/anomaly} & Real-time anomaly detection scoring for sensor data \\
+\midrule
+POST & \texttt{/predict/failure} & 7-day failure probability prediction \\
+\midrule
+POST & \texttt{/predict/efficiency} & Multi-day efficiency forecast \\
+\midrule
+GET & \texttt{/alerts} & Retrieve current active alerts and warnings \\
+\midrule
+GET & \texttt{/health/\{asset\_id\}} & Asset health score and status summary \\
+\midrule
+GET & \texttt{/metrics} & System performance metrics \\
+\midrule
+GET & \texttt{/docs} & Interactive API documentation \\
+\end{longtable}
+
+\paragraph{Request/Response Models}
+\begin{itemize}[leftmargin=*]
+    \item Strongly-typed Pydantic schemas
+    \item Input validation with informative error messages
+    \item Consistent response format:
+    \begin{verbatim}
+    {
+        "status": "success|error",
+        "data": {...},
+        "timestamp": "ISO-8601",
+        "request_id": "UUID"
+    }
+    \end{verbatim}
+\end{itemize}
+
+\paragraph{Performance Optimization}
+\begin{itemize}[leftmargin=*]
+    \item Model caching in memory
+    \item Batch prediction support
+    \item Response compression
+    \item Connection pooling
+    \item Rate limiting and throttling
+\end{itemize}
+
+\paragraph{Error Handling}
+\begin{itemize}[leftmargin=*]
+    \item Comprehensive exception handling
+    \item HTTP status codes following REST conventions
+    \item Detailed error messages for debugging
+    \item Logging and monitoring integration
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{enumerate}
+    \item Complete FastAPI application
+    \item API documentation (auto-generated + manual)
+    \item Postman/Thunder Client collection
+    \item Performance benchmarking results
+    \item Deployment guide
+\end{enumerate}
+
+\subsubsection{Timeline}
+\textbf{Duration}: 5-7 days
+
+\newpage
+
+\subsection{Phase 5: Dashboard Development}
+
+\subsubsection{Objectives}
+Create an intuitive, real-time monitoring dashboard for operations teams to visualize system status, predictions, and alerts.
+
+\subsubsection{Dashboard Features}
+
+\paragraph{Real-Time Monitoring}
+\begin{itemize}[leftmargin=*]
+    \item Live sensor data visualization
+    \item Asset status overview (grid/list view)
+    \item Active alerts and warnings panel
+    \item System health indicators
+\end{itemize}
+
+\paragraph{Predictive Analytics Visualization}
+\begin{itemize}[leftmargin=*]
+    \item Anomaly score time series
+    \item Failure probability gauges
+    \item Efficiency forecast charts (interactive Plotly)
+    \item Historical trend analysis
+\end{itemize}
+
+\paragraph{Asset Management}
+\begin{itemize}[leftmargin=*]
+    \item Individual asset detail pages
+    \item Maintenance history tracking
+    \item Performance comparison across assets
+    \item Geographic distribution map (if applicable)
+\end{itemize}
+
+\paragraph{Analytics and Reporting}
+\begin{itemize}[leftmargin=*]
+    \item Customizable date range selection
+    \item Export capabilities (CSV, PDF)
+    \item Statistical summaries
+    \item KPI dashboards
+\end{itemize}
+
+\subsubsection{User Interface Design}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Framework}: Streamlit with custom CSS
+    \item \textbf{Layout}: Multi-page application with sidebar navigation
+    \item \textbf{Visualization}: Plotly for interactive charts
+    \item \textbf{Responsive Design}: Optimized for desktop and tablet
+    \item \textbf{Color Scheme}: Professional theme with status-based color coding (green/yellow/red)
+\end{itemize}
+
+\subsubsection{Data Integration}
+\begin{itemize}[leftmargin=*]
+    \item Direct API consumption
+    \item WebSocket support for real-time updates (future enhancement)
+    \item Caching strategy for performance
+    \item Auto-refresh capabilities
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{enumerate}
+    \item Complete Streamlit dashboard application
+    \item User guide and documentation
+    \item Demo video/screenshots
+    \item Configuration guide
+\end{enumerate}
+
+\subsubsection{Timeline}
+\textbf{Duration}: 5-7 days
+
+\newpage
+
+\subsection{Phase 6: Testing and Quality Assurance}
+
+\subsubsection{Objectives}
+Ensure system reliability, accuracy, and robustness through comprehensive testing strategies.
+
+\subsubsection{Testing Strategy}
+
+\paragraph{Unit Testing}
+\begin{itemize}[leftmargin=*]
+    \item Test coverage target: $\geq$ 80\%
+    \item Individual function and method testing
+    \item Mock external dependencies
+    \item Edge case validation
+    \item Framework: pytest
+\end{itemize}
+
+\paragraph{Integration Testing}
+\begin{itemize}[leftmargin=*]
+    \item End-to-end pipeline testing
+    \item API endpoint testing (pytest + httpx)
+    \item Database interaction testing
+    \item Model loading and inference testing
+\end{itemize}
+
+\paragraph{Performance Testing}
+\begin{itemize}[leftmargin=*]
+    \item API response time benchmarking
+    \item Concurrent request handling
+    \item Model inference latency measurement
+    \item Memory usage profiling
+    \item Load testing with realistic scenarios
+\end{itemize}
+
+\paragraph{Model Validation}
+\begin{itemize}[leftmargin=*]
+    \item Cross-validation results verification
+    \item Holdout test set evaluation
+    \item Prediction consistency checks
+    \item Threshold sensitivity analysis
+    \item A/B testing framework (for future iterations)
+\end{itemize}
+
+\paragraph{User Acceptance Testing}
+\begin{itemize}[leftmargin=*]
+    \item Dashboard usability testing
+    \item API documentation clarity
+    \item End-user feedback collection
+    \item Bug reporting and tracking
+\end{itemize}
+
+\subsubsection{Quality Metrics}
+\begin{itemize}[leftmargin=*]
+    \item Code coverage percentage
+    \item Test pass rate
+    \item Mean time to detection (MTTD) for anomalies
+    \item API uptime and availability
+    \item Model prediction accuracy on test data
+\end{itemize}
+
+\subsubsection{Deliverables}
+\begin{enumerate}
+    \item Comprehensive test suite
+    \item Test coverage reports
+    \item Performance benchmarking results
+    \item Bug tracking and resolution log
+    \item Quality assurance documentation
+\end{enumerate}
+
+\subsubsection{Timeline}
+\textbf{Duration}: 4-6 days (parallel with development phases)
+
+\newpage
+
+\section{Risk Management}
+
+\subsection{Technical Risks}
+
+\begin{longtable}{p{0.3\textwidth} p{0.25\textwidth} p{0.35\textwidth}}
+\toprule
+\textbf{Risk} & \textbf{Impact} & \textbf{Mitigation Strategy} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\tablename\ \thetable\ -- \textit{Continued from previous page}} \\
+\toprule
+\textbf{Risk} & \textbf{Impact} & \textbf{Mitigation Strategy} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+
+Model overfitting & High & Cross-validation, regularization, holdout testing \\
+\midrule
+Poor synthetic data quality & High & Domain expert validation, statistical analysis \\
+\midrule
+API performance bottlenecks & Medium & Caching, async processing, load testing \\
+\midrule
+Dependency conflicts & Low & Virtual environment, version pinning \\
+\midrule
+Model drift over time & Medium & Monitoring framework, retraining pipeline \\
+\end{longtable}
+
+\subsection{Operational Risks}
+
+\begin{longtable}{p{0.3\textwidth} p{0.25\textwidth} p{0.35\textwidth}}
+\toprule
+\textbf{Risk} & \textbf{Impact} & \textbf{Mitigation Strategy} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\tablename\ \thetable\ -- \textit{Continued from previous page}} \\
+\toprule
+\textbf{Risk} & \textbf{Impact} & \textbf{Mitigation Strategy} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+
+High false positive rate & High & Threshold tuning, ensemble methods \\
+\midrule
+User adoption resistance & Medium & Intuitive UI, comprehensive training \\
+\midrule
+Scalability limitations & Medium & Modular architecture, cloud-ready design \\
+\midrule
+Data privacy concerns & Low & Synthetic data usage, anonymization \\
+\end{longtable}
+
+\newpage
+
+\section{Success Metrics and KPIs}
+
+\subsection{Model Performance KPIs}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Anomaly Detection}:
+    \begin{itemize}
+        \item F1-Score $\geq$ 0.85
+        \item False Positive Rate $\leq$ 5\%
+        \item Detection latency $\leq$ 1 second
+    \end{itemize}
+    
+    \item \textbf{Failure Prediction}:
+    \begin{itemize}
+        \item Recall $\geq$ 0.90 (minimize missed failures)
+        \item Precision $\geq$ 0.75
+        \item AUC-ROC $\geq$ 0.88
+    \end{itemize}
+    
+    \item \textbf{Efficiency Forecasting}:
+    \begin{itemize}
+        \item MAPE $\leq$ 10\% for 7-day forecast
+        \item RMSE $\leq$ 5\% of mean efficiency
+        \item R² Score $\geq$ 0.85
+    \end{itemize}
+\end{itemize}
+
+\subsection{System Performance KPIs}
+
+\begin{itemize}[leftmargin=*]
+    \item API response time $\leq$ 200ms (95th percentile)
+    \item System uptime $\geq$ 99.5\%
+    \item Dashboard load time $\leq$ 3 seconds
+    \item Concurrent user support $\geq$ 50 users
+\end{itemize}
+
+\subsection{Business Impact KPIs}
+
+\begin{itemize}[leftmargin=*]
+    \item Reduction in unplanned downtime (target: 30-50\%)
+    \item Maintenance cost optimization (target: 20-30\% reduction)
+    \item Energy production efficiency improvement (target: 5-10\%)
+    \item Mean time to repair (MTTR) reduction (target: 25\%)
+\end{itemize}
+
+\newpage
+
+\section{Deployment Strategy}
+
+\subsection{Development Environment}
+\begin{itemize}[leftmargin=*]
+    \item Python virtual environment
+    \item Local development servers (Uvicorn, Streamlit)
+    \item Git version control
+    \item Continuous integration testing
+\end{itemize}
+
+\subsection{Production Deployment (Future)}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Containerization}: Docker containers for API and dashboard
+    \item \textbf{Orchestration}: Kubernetes for scalability
+    \item \textbf{Cloud Platform}: AWS/Azure/GCP deployment
+    \item \textbf{Database}: PostgreSQL/MongoDB for production data
+    \item \textbf{Monitoring}: Prometheus + Grafana
+    \item \textbf{CI/CD}: GitHub Actions or GitLab CI
+\end{itemize}
+
+\subsection{Rollout Plan}
+\begin{enumerate}
+    \item Internal testing and validation
+    \item Pilot deployment with limited assets
+    \item Performance monitoring and optimization
+    \item Gradual scaling to full production
+    \item User training and onboarding
+\end{enumerate}
+
+\newpage
+
+\section{Project Timeline}
+
+\subsection{Gantt Chart Overview}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Phase} & \textbf{Duration} & \textbf{Dependencies} \\
+\hline
+Data Generation & 3-5 days & None \\
+\hline
+Feature Engineering & 4-6 days & Data Generation \\
+\hline
+Model Development & 10-14 days & Feature Engineering \\
+\hline
+API Development & 5-7 days & Model Development \\
+\hline
+Dashboard Development & 5-7 days & API Development \\
+\hline
+Testing \& QA & 4-6 days & All phases (parallel) \\
+\hline
+\textbf{Total} & \textbf{31-45 days} & \\
+\hline
+\end{tabular}
+\caption{Project Phase Timeline}
+\end{table}
+
+\subsection{Critical Path}
+Data Generation $\rightarrow$ Feature Engineering $\rightarrow$ Model Development $\rightarrow$ API Development $\rightarrow$ Dashboard Development
+
+\subsection{Milestones}
+\begin{enumerate}
+    \item \textbf{Week 1}: Data generation complete
+    \item \textbf{Week 2}: Feature engineering pipeline operational
+    \item \textbf{Week 3-4}: All models trained and validated
+    \item \textbf{Week 5}: API functional with all endpoints
+    \item \textbf{Week 6}: Dashboard deployed and tested
+    \item \textbf{Week 6-7}: Final testing and documentation
+\end{enumerate}
+
+\newpage
+
+\section{Documentation and Knowledge Transfer}
+
+\subsection{Technical Documentation}
+\begin{itemize}[leftmargin=*]
+    \item System architecture diagrams
+    \item API reference documentation
+    \item Model architecture and training procedures
+    \item Database schema (if applicable)
+    \item Deployment and configuration guides
+\end{itemize}
+
+\subsection{User Documentation}
+\begin{itemize}[leftmargin=*]
+    \item Dashboard user guide
+    \item API integration examples
+    \item Troubleshooting guide
+    \item FAQ section
+\end{itemize}
+
+\subsection{Code Documentation}
+\begin{itemize}[leftmargin=*]
+    \item Inline code comments
+    \item Docstrings for all functions and classes
+    \item README files for each module
+    \item Code style guide (PEP 8 compliance)
+\end{itemize}
+
+\newpage
+
+\section{Future Enhancements}
+
+\subsection{Short-term (3-6 months)}
+\begin{itemize}[leftmargin=*]
+    \item Integration with real sensor data streams
+    \item Mobile application development
+    \item Advanced alerting system (email, SMS, push notifications)
+    \item Multi-asset comparison and benchmarking
+    \item Automated report generation
+\end{itemize}
+
+\subsection{Medium-term (6-12 months)}
+\begin{itemize}[leftmargin=*]
+    \item Expansion to wind turbines and other renewable assets
+    \item Deep learning model improvements (Transformers, Attention mechanisms)
+    \item Prescriptive maintenance recommendations
+    \item Integration with CMMS (Computerized Maintenance Management Systems)
+    \item Advanced visualization and 3D asset modeling
+\end{itemize}
+
+\subsection{Long-term (12+ months)}
+\begin{itemize}[leftmargin=*]
+    \item Edge computing deployment for real-time processing
+    \item Federated learning across multiple installations
+    \item Digital twin implementation
+    \item Blockchain integration for maintenance records
+    \item AI-driven autonomous maintenance scheduling
+\end{itemize}
+
+\newpage
+
+\section{Conclusion}
+
+This comprehensive project plan outlines a systematic approach to developing a state-of-the-art predictive maintenance system for renewable energy infrastructure. By leveraging advanced machine learning techniques, modern software engineering practices, and intuitive user interfaces, this system will deliver significant operational benefits including:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Proactive Maintenance}: Early detection of potential failures before they occur
+    \item \textbf{Cost Optimization}: Reduced maintenance costs and minimized downtime
+    \item \textbf{Efficiency Maximization}: Optimized energy production through predictive insights
+    \item \textbf{Data-Driven Decisions}: Actionable intelligence for operations teams
+    \item \textbf{Scalability}: Architecture designed for growth and expansion
+\end{itemize}
+
+The modular design, comprehensive testing strategy, and clear documentation ensure that this system will be maintainable, extensible, and valuable for years to come. Through careful execution of each phase and continuous monitoring of success metrics, this project will establish a new standard for intelligent renewable energy asset management.
+
+\vspace{1cm}
+
+\begin{center}
+\textit{This project represents a significant step forward in the application of artificial intelligence to sustainable energy infrastructure, contributing to a more efficient and reliable renewable energy future.}
+\end{center}
+
+\newpage
+
+\appendix
+
+\section{Appendix A: Glossary}
+
+\begin{description}[leftmargin=*]
+    \item[API] Application Programming Interface - a set of protocols for building software applications
+    \item[AUC-ROC] Area Under the Receiver Operating Characteristic Curve - model performance metric
+    \item[CMMS] Computerized Maintenance Management System
+    \item[FastAPI] Modern Python web framework for building APIs
+    \item[GRU] Gated Recurrent Unit - type of recurrent neural network
+    \item[KPI] Key Performance Indicator
+    \item[LSTM] Long Short-Term Memory - type of recurrent neural network
+    \item[MAPE] Mean Absolute Percentage Error
+    \item[MTTR] Mean Time To Repair
+    \item[RMSE] Root Mean Squared Error
+    \item[SMOTE] Synthetic Minority Over-sampling Technique
+    \item[XGBoost] Extreme Gradient Boosting - machine learning algorithm
+\end{description}
+
+\section{Appendix B: References}
+
+\begin{enumerate}
+    \item Scikit-learn Documentation: \url{https://scikit-learn.org/}
+    \item PyTorch Documentation: \url{https://pytorch.org/docs/}
+    \item FastAPI Documentation: \url{https://fastapi.tiangolo.com/}
+    \item Streamlit Documentation: \url{https://docs.streamlit.io/}
+    \item XGBoost Documentation: \url{https://xgboost.readthedocs.io/}
+\end{enumerate}
+
+\section{Appendix C: Contact Information}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Project}: Predictive Maintenance for Renewable Infrastructure
+    \item \textbf{Event}: Dubai Hackathon 2026
+    \item \textbf{Date}: February 2026
+\end{itemize}
+
+\end{document}
