@@ -52,8 +52,12 @@ def update_simulator_state(asset_file, key, value):
         with open(path, 'r') as f:
             state = json.load(f)
         state[key] = value
-        with open(path, 'w') as f:
+        
+        # Atomic Write
+        temp_file = str(path) + '.tmp'
+        with open(temp_file, 'w') as f:
             json.dump(state, f, indent=4)
+        os.replace(temp_file, str(path))
 
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Solar_panel_icon.svg/512px-Solar_panel_icon.svg.png", width=50)
@@ -391,14 +395,14 @@ def live_operations_loop():
                                 subplot_titles=("Power Output (MW)", "Sensor Telemetry", "Real-time Failure Probability (ML Output)"))
         
             # 1. Power
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#0ea5e9', shape='spline', smoothing=1.3)), row=1, col=1)
+            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#0ea5e9')), row=1, col=1)
         
             # 2. Vibration & Temp
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Vibration_mm_s'], name="Vibration", line=dict(color='#ef4444', shape='spline', smoothing=1.3)), row=2, col=1)
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Gearbox_Temp_C']/10, name="Temp (scaled)", line=dict(color='orange', dash='dot', shape='spline', smoothing=1.3)), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Vibration_mm_s'], name="Vibration", line=dict(color='#ef4444')), row=2, col=1)
+            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Gearbox_Temp_C']/10, name="Temp (scaled)", line=dict(color='orange', dash='dot')), row=2, col=1)
         
             # 3. ML Prediction
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Failure_Prob'], name="Failure Prob.", line=dict(color='#8b5cf6', width=3, shape='spline', smoothing=1.3)), row=3, col=1)
+            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Failure_Prob'], name="Failure Prob.", line=dict(color='#8b5cf6', width=3)), row=3, col=1)
         
             # Add risk zones to ML chart
             fig.add_hrect(y0=0, y1=0.4, fillcolor="green", opacity=0.1, row=3, col=1)
@@ -452,14 +456,14 @@ def live_operations_loop():
                                 subplot_titles=("Solar Power Output (MW)", "Environment (Irradiance W/m² & Temp)", "Predicted Panel Efficiency (%)"))
         
             # 1. Power Output
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#eab308', shape='spline', smoothing=1.3)), row=1, col=1)
+            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#eab308')), row=1, col=1)
         
             # 2. Environment (Irradiance and Temperature)
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[irr_key], name="Irradiance", line=dict(color='#f97316', shape='spline', smoothing=1.3)), row=2, col=1)
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[temp_key]*10, name="Panel Temp (*10 °C)", line=dict(color='#ef4444', dash='dot', shape='spline', smoothing=1.3)), row=2, col=1)
+            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[irr_key], name="Irradiance", line=dict(color='#f97316')), row=2, col=1)
+            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[temp_key]*10, name="Panel Temp (*10 °C)", line=dict(color='#ef4444', dash='dot')), row=2, col=1)
         
             # 3. Efficiency Forecast
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Efficiency_Forecast'], name="Forecasted Efficiency", line=dict(color='#00b894', width=3, shape='spline', smoothing=1.3)), row=3, col=1)
+            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Efficiency_Forecast'], name="Forecasted Efficiency", line=dict(color='#00b894', width=3)), row=3, col=1)
         
             fig_eff.update_layout(uirevision=True, height=700, margin=dict(t=30, b=20, l=40, r=40))
             st.plotly_chart(fig_eff, use_container_width=True)

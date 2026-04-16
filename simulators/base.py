@@ -31,10 +31,12 @@ class BaseSimulator(ABC):
         return {}
 
     def save_state(self):
-        """Save current simulator state."""
+        """Save current simulator state atomically."""
         os.makedirs(os.path.dirname(self.state_file), exist_ok=True)
-        with open(self.state_file, 'w') as f:
+        temp_file = self.state_file + '.tmp'
+        with open(temp_file, 'w') as f:
             json.dump(self.state, f, indent=4)
+        os.replace(temp_file, self.state_file)
             
     def set_anomaly_mode(self, mode: str):
         """Set the active simulation mode (normal or an anomaly type)."""
