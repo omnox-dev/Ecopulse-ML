@@ -1,82 +1,89 @@
-# Predictive Maintenance for Renewable Infrastructure
+# EcoPulse AI: Predictive Maintenance for Renewable Infrastructure ⚡
 
-An ML-based predictive maintenance system for solar panels using sensor data and weather patterns.
+EcoPulse AI is a state-of-the-art predictive maintenance and monitoring ecosystem designed for modern renewable energy fleets (Solar and Wind). Built for the Dubai Hackathon, it combines real-time physics-based asset simulation, advanced machine learning, and an operator-focused interactive dashboard.
 
-## Features
+---
 
-- **Anomaly Detection**: Isolation Forest + Autoencoder for early fault detection
-- **Failure Prediction**: Random Forest + XGBoost for 7-day failure forecasting
-- **Efficiency Forecasting**: LSTM/GRU for efficiency trend prediction
-- **Real-time API**: FastAPI backend for predictions
-- **Interactive Dashboard**: Streamlit-based monitoring interface
+## 🌟 Key Features
 
-## Project Structure
+1. **Real-time Asset Simulation Engine**
+   - **Wind Turbine Simulator**: Models physics-based power curves, rotor speeds, vibration anomalies, and thermal limits base on fluctuating wind speeds.
+   - **Solar Array Simulator**: Generates realistic irradiance, panel-level thermal output, efficiency degradation, and voltage profiles.
 
-```
+2. **Machine Learning Intelligence**
+   - **Failure Prediction Model**: An ensemble (Random Forest + XGBoost) predicting 7-day critical failures based on vibration profiles and thermal readings.
+   - **Efficiency Forecaster**: A PyTorch LSTM/GRU sequence model forecasting performance ratio trends and efficiency drops.
+   - **Zero-Day Anomaly Detection**: Isolation Forest techniques for immediate detection of sensor drift.
+
+3. **Operator Dashboard**
+   - Built with Streamlit and Plotly.
+   - Streams live CSV data populated dynamically by the simulators.
+   - Offers real-time alerts, physical control toggles, multi-dimensional 2D/3D visual mappings, and spatial volumetric thermal maps.
+
+---
+
+## 📂 Project Structure
+
+```text
 predictive-maintenance/
-├── data/                       # Generated datasets
-├── src/
-│   ├── data_generation/        # Synthetic data generators
-│   ├── feature_engineering/    # Feature extraction
-│   ├── models/                 # ML models
-│   ├── api/                    # FastAPI backend
-│   └── utils/                  # Helper functions
-├── dashboard/                  # Streamlit app
-├── tests/                      # Unit tests
-└── models/                     # Saved model files
+├── dashboard/                  # Streamlit operator portal 
+│   └── app.py                  # Main entry point for GUI
+├── simulators/                 # Real-time stateful physics mockers
+│   ├── run_simulation.py       # Starts the background data generator
+│   ├── wind.py & solar.py      # Asset logic
+├── src/                        
+│   ├── feature_engineering/    # Automated pipeline transformations
+│   ├── models/                 # Model training and prediction architectures
+├── models/                     # Compiled binaries (.joblib, .pt)
+├── data/simulated/             # Auto-generated live telemetry CSVs
+└── README.md                   # This file!
 ```
 
-## Installation
+---
 
-```bash
-# Create virtual environment
-python -m venv venv
+## 🚀 Quickstart Guide
 
-# Activate (Windows)
-venv\Scripts\activate
+### 1. Installation 
+Ensure you have Python 3.9+ installed.
 
-# Install dependencies
+```powershell
+# Clone the repository
+git clone https://github.com/omnox-dev/Ecopulse-ML.git
+cd Ecopulse-ML
 
+# Install requirements
 pip install -r requirements.txt
 ```
 
-## Usage
+### 2. Run the Asset Simulators
+You need to generate real-time fleet data. Open a terminal and run the background simulation system. Keep this terminal running!
 
-### 1. Generate Synthetic Data
-```bash
-python src/data_generation/generate_all.py
+```powershell
+python simulators/run_simulation.py
 ```
+*This instantly generates 7 days of historical context and begins streaming live data points every 60 seconds.*
 
-### 2. Train Models
-```bash
-python src/models/train_all.py
-```
+### 3. Launch the Operator Dashboard
+In a **new terminal tab**, boot up the Streamlit interface:
 
-### 3. Run API Server
-```bash
-uvicorn src.api.main:app --reload
-```
-
-### 4. Launch Dashboard
-```bash
+```powershell
 streamlit run dashboard/app.py
 ```
+Navigate to `http://localhost:8501` in your browser. 
 
-## API Endpoints
+> **Pro-tip**: Click on the **"🔐 Special Analysis"** tab in the dashboard and enter the access code `omnox123` to unlock 3D volumetric thermal mappings and trajectory analysis.
 
-- `POST /predict/anomaly` - Real-time anomaly scoring
-- `POST /predict/failure` - Failure probability prediction
-- `POST /predict/efficiency` - Efficiency forecast
-- `GET /alerts` - Current active alerts
-- `GET /health/{asset_id}` - Asset health score
+---
 
-## Tech Stack
+## 🛠️ Technology Stack
 
-- **ML**: scikit-learn, PyTorch, XGBoost
-- **API**: FastAPI
-- **Dashboard**: Streamlit, Plotly
-- **Data**: Pandas, NumPy
+- **Machine Learning**: `scikit-learn`, `PyTorch` (LSTM), `XGBoost`, `joblib`
+- **Data Engineering**: `Pandas`, `NumPy`
+- **Frontend / Dashboard**: `Streamlit`, `Plotly Express / Graph Objects`
+- **Simulation**: Custom pure-Python dynamic state machines
 
-## License
+---
 
-MIT License
+## 📜 License
+
+MIT License. Developed for the Dubai Hackathon.
