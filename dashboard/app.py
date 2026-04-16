@@ -350,24 +350,39 @@ with tab_solar:
     
     st.markdown("### ☀️ Solar Efficiency Forecasting (LSTM Model)")
     
-    c_map, c_data = st.columns([2, 1])
+    c_map, c_data = st.columns([3, 1])
     
     with c_map:
-        fig_eff = go.Figure()
-        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Efficiency_Forecast'], name="Forecasted Efficiency", line=dict(color='#00b894', width=3)))
-        fig_eff.update_layout(title="Predicted Efficiency Trend", yaxis_title="Efficiency (%)", height=350)
+        fig_eff = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08, 
+                            subplot_titles=("Solar Power Output (MW)", "Environment (Irradiance W/m² & Temp)", "Predicted Panel Efficiency (%)"))
+        
+        # 1. Power Output
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#eab308')), row=1, col=1)
+        
+        # 2. Environment (Irradiance and Temperature)
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[irr_key], name="Irradiance", line=dict(color='#f97316')), row=2, col=1)
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[temp_key]*10, name="Panel Temp (*10 °C)", line=dict(color='#ef4444', dash='dot')), row=2, col=1)
+        
+        # 3. Efficiency Forecast
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Efficiency_Forecast'], name="Forecasted Efficiency", line=dict(color='#00b894', width=3)), row=3, col=1)
+        
+        fig_eff.update_layout(height=700, margin=dict(t=30, b=20, l=40, r=40))
         st.plotly_chart(fig_eff, use_container_width=True)
         
     with c_data:
         st.markdown("#### 🔮 Forecast Details")
-        st.write("The **LSTM Neural Network** uses historical irradiance and temperature data to predict panel efficiency.")
-        st.dataframe(df_solar[['timestamp', 'Efficiency_Forecast']].tail(5).style.format({"Efficiency_Forecast": "{:.2f}%"}), use_container_width=True)
+        st.write("The **LSTM Neural Network** uses historical irradiance and temperature sequences to predict upcoming panel efficiency capabilities.")
+        st.dataframe(df_solar[['timestamp', 'Efficiency_Forecast']].tail(8).style.format({"Efficiency_Forecast": "{:.2f}%"}), use_container_width=True)
         
-    st.info("ℹ️ Optimization Tip: Tilt angle on Row 4 is suboptimal. Use auto-adjust to gain ~2% efficiency.")
-    if st.button("Auto-Adjust Trackers"):
-         with st.spinner("Aligning panels..."):
-             time.sleep(1)
-             st.success("Panels aligned to optimal incidence angle.")
+        st.markdown("---")
+        st.markdown("#### ⚙️ Array Controls")
+        st.button("⚙️ Trigger Inverter Reset", use_container_width=True)
+        st.button("🧼 Dispatch Cleaning Drone", use_container_width=True)
+        st.info("ℹ️ Optimization Tip: Tilt angle on Row 4 is suboptimal. Use auto-adjust to gain ~2% efficiency.")
+        if st.button("📐 Auto-Adjust Trackers", type="primary", use_container_width=True):
+             with st.spinner("Aligning panels..."):
+                 time.sleep(1)
+                 st.success("Panels aligned to optimal incidence angle.")
 
 with tab_special:
     st.markdown("### 🔐 Restricted Area: Advanced Analyst Tools")
