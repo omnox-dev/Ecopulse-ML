@@ -321,323 +321,325 @@ if not solar_csv.exists() or not wind_csv.exists():
         wind_df.to_csv(wind_csv, index=False)
 
 
-@st.fragment(run_every="3s")
-def live_operations_loop():
-    # Auto-Advance the Simulation Physics Clock By One Step
-    solar_sim.load_state() 
-    wind_sim.load_state()  
+# Auto-Advance the Simulation Physics Clock By One Step
+solar_sim.load_state() 
+wind_sim.load_state()  
 
-    next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
-    next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)
+next_time_solar = datetime.fromisoformat(solar_sim.state['last_timestamp']) + timedelta(minutes=interval)
+next_time_wind = datetime.fromisoformat(wind_sim.state['last_timestamp']) + timedelta(minutes=interval)
 
-    solar_df_new = solar_sim.simulate_until(next_time_solar, interval_minutes=interval)
-    wind_df_new = wind_sim.simulate_until(next_time_wind, interval_minutes=interval)
+solar_df_new = solar_sim.simulate_until(next_time_solar, interval_minutes=interval)
+wind_df_new = wind_sim.simulate_until(next_time_wind, interval_minutes=interval)
 
-    if not solar_df_new.empty:
-        solar_df_new.to_csv(solar_csv, mode='a', index=False, header=False)
-    if not wind_df_new.empty:
-        wind_df_new.to_csv(wind_csv, mode='a', index=False, header=False)
+if not solar_df_new.empty:
+    solar_df_new.to_csv(solar_csv, mode='a', index=False, header=False)
+if not wind_df_new.empty:
+    wind_df_new.to_csv(wind_csv, mode='a', index=False, header=False)
 
-    # ==================== Data & Predictions Init ====================
-    # Read from the newly updated CSV files and cast to ML models
-    df_wind, df_solar = generate_live_data_with_predictions()
+# ==================== Data & Predictions Init ====================
+# Read from the newly updated CSV files and cast to ML models
+df_wind, df_solar = generate_live_data_with_predictions()
 
-    # ==================== Header & Global Status ====================
+# ==================== Header & Global Status ====================
 
-    c1, c2 = st.columns([3, 1])
-    with c1:
-        st.markdown('<p class="main-header">EcoPulse AI Operator Console</p>', unsafe_allow_html=True)
-        st.markdown('<p class="sub-header">Active Shift: <strong>Om (Lead Operator)</strong> | Status: <span class="metric-pos">AI Models Online</span></p>', unsafe_allow_html=True)
+c1, c2 = st.columns([3, 1])
+with c1:
+    st.markdown('<p class="main-header">EcoPulse AI Operator Console</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Active Shift: <strong>Om (Lead Operator)</strong> | Status: <span class="metric-pos">AI Models Online</span></p>', unsafe_allow_html=True)
 
-    with c2:
-        total_power_mw = df_wind['Power_MW'].iloc[-1] + df_solar['Power_MW'].iloc[-1]
-        st.markdown(f"""
-            <div style="text-align: right; padding: 10px; background: #1e293b; color: white; border-radius: 8px;">
-                <div style="font-size: 0.8rem; opacity: 0.8;">TOTAL LIVE SENSOR OUTPUT</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #4ade80;">{total_power_mw:.1f} MW</div>
-            </div>
-        """, unsafe_allow_html=True)
+with c2:
+    total_power_mw = df_wind['Power_MW'].iloc[-1] + df_solar['Power_MW'].iloc[-1]
+    st.markdown(f"""
+        <div style="text-align: right; padding: 10px; background: #1e293b; color: white; border-radius: 8px;">
+            <div style="font-size: 0.8rem; opacity: 0.8;">TOTAL LIVE SENSOR OUTPUT</div>
+            <div style="font-size: 1.8rem; font-weight: bold; color: #4ade80;">{total_power_mw:.1f} MW</div>
+        </div>
+    """, unsafe_allow_html=True)
 
-    # ==================== Main Operations View ====================
+# ==================== Main Operations View ====================
 
-    # ==================== Alert Banner ====================
-    alerts = get_alerts(df_wind)
-    if alerts:
-        st.error(f"🚨 ACTIVE INTELLIGENCE ALERTS ({len(alerts)})")
-        for a in alerts:
-            icon = "🔴" if a['severity'] == "Critical" else "⚠️"
-            st.markdown(f"**{icon} {a['asset']}**: {a['msg']} — *{a['time']}*")
-        st.markdown("---")
-
-    tab_wind, tab_solar, tab_special = st.tabs(["🌪️ Wind Fleet", "☀️ Solar Fleet", "🔐 Special Analysis"])
-
-    with tab_wind:
-        # Quick Stats Row
-        k1, k2, k3, k4 = st.columns(4)
-        curr_wind = df_wind.iloc[-1]
-        prev_wind = df_wind.iloc[-2]
-        k1.metric("Avg Wind Speed", f"{curr_wind['Wind_Speed_m_s']:.1f} m/s", f"{curr_wind['Wind_Speed_m_s'] - prev_wind['Wind_Speed_m_s']:.1f} m/s")
-        k2.metric("Active Power", f"{curr_wind['Power_MW']:.1f} MW", f"{curr_wind['Power_MW'] - prev_wind['Power_MW']:.1f} MW")
-        k3.metric("Vibration Level", f"{curr_wind['Vibration_mm_s']:.3f} mm/s", f"{curr_wind['Vibration_mm_s'] - prev_wind['Vibration_mm_s']:.3f} mm/s", delta_color="inverse")
-    
-        # ML Insight Card
-        current_risk = df_wind.iloc[-1]['Failure_Prob']
-        risk_color = "normal" if current_risk < 0.4 else "off"
-        k4.metric("ML Failure Risk", f"{current_risk*100:.1f}%", f"{(current_risk - df_wind.iloc[-2]['Failure_Prob'])*100:.1f}%", delta_color=risk_color)
-    
-        st.markdown("### 📡 Live Telemetry & ML Predictions: Turbine WT-04")
-    
-        # Real-time charts
-        col_charts, col_ctrl = st.columns([3, 1])
-    
-        with col_charts:
-            fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08, 
-                                subplot_titles=("Power Output (MW)", "Sensor Telemetry", "Real-time Failure Probability (ML Output)"))
-        
-            # 1. Power
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#0ea5e9')), row=1, col=1)
-        
-            # 2. Vibration & Temp
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Vibration_mm_s'], name="Vibration", line=dict(color='#ef4444')), row=2, col=1)
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Gearbox_Temp_C']/10, name="Temp (scaled)", line=dict(color='orange', dash='dot')), row=2, col=1)
-        
-            # 3. ML Prediction
-            fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Failure_Prob'], name="Failure Prob.", line=dict(color='#8b5cf6', width=3)), row=3, col=1)
-        
-            # Add risk zones to ML chart
-            fig.add_hrect(y0=0, y1=0.4, fillcolor="green", opacity=0.1, row=3, col=1)
-            fig.add_hrect(y0=0.4, y1=0.7, fillcolor="yellow", opacity=0.1, row=3, col=1)
-            fig.add_hrect(y0=0.7, y1=1.0, fillcolor="red", opacity=0.1, row=3, col=1)
-        
-            fig.update_layout(uirevision=True, height=700, margin=dict(t=30, b=20, l=40, r=40))
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col_ctrl:
-            st.markdown("#### 🧠 Model Insights")
-            st.info(f"The **Random Forest Classifier** is analyzing real-time vibration and temperature data.")
-        
-            if current_risk > 0.5:
-                st.warning("⚠️ **High Risk Factor:** Abnormal vibration patterns detected. Correlated with gearbox usage.")
-            else:
-                st.success("✅ **System Nominal:** Models predict stable operation for next 24h.")
-            
-            st.markdown("---")
-            st.markdown("#### ⚙️ Quick Actions")
-            st.button("🛑 Emergency Stop", type="primary", use_container_width=True)
-            st.button("🔄 Reset Yaw System", use_container_width=True)
-            st.button("🔧 Flag for Inspection", use_container_width=True)
-
-    with tab_solar:
-        # Quick Stats
-        s1, s2, s3, s4 = st.columns(4)
-        curr_solar = df_solar.iloc[-1]
-        prev_solar = df_solar.iloc[-2]
-    
-        # Safely get irradiance key
-        irr_key = 'irradiance' if 'irradiance' in curr_solar else 'Irradiance_W_m2'
-    
-        s1.metric("Irradiance", f"{curr_solar[irr_key]:.0f} W/m²", f"{curr_solar[irr_key] - prev_solar[irr_key]:.0f} W/m²")
-        s2.metric("DC Output", f"{curr_solar['Power_MW']:.1f} MW", f"{curr_solar['Power_MW'] - prev_solar['Power_MW']:.1f} MW")
-    
-        forecast_eff = df_solar.iloc[-1]['Efficiency_Forecast']
-        prev_eff = df_solar.iloc[-2]['Efficiency_Forecast']
-        s3.metric("Efficiency Forecast (Next 1h)", f"{forecast_eff:.1f}%", f"{forecast_eff - prev_eff:.2f}%", help="Predicted by LSTM Model")
-    
-        # Safely handle panel temperature
-        temp_key = 'panel_temperature' if 'panel_temperature' in curr_solar else 'Panel_Temp_C'
-        s4.metric("Panel Temp", f"{curr_solar[temp_key]:.1f} °C", f"{curr_solar[temp_key] - prev_solar[temp_key]:.1f} °C", delta_color="inverse")
-    
-        st.markdown("### ☀️ Solar Efficiency Forecasting (LSTM Model)")
-    
-        c_map, c_data = st.columns([3, 1])
-    
-        with c_map:
-            fig_eff = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08, 
-                                subplot_titles=("Solar Power Output (MW)", "Environment (Irradiance W/m² & Temp)", "Predicted Panel Efficiency (%)"))
-        
-            # 1. Power Output
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#eab308')), row=1, col=1)
-        
-            # 2. Environment (Irradiance and Temperature)
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[irr_key], name="Irradiance", line=dict(color='#f97316')), row=2, col=1)
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[temp_key]*10, name="Panel Temp (*10 °C)", line=dict(color='#ef4444', dash='dot')), row=2, col=1)
-        
-            # 3. Efficiency Forecast
-            fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Efficiency_Forecast'], name="Forecasted Efficiency", line=dict(color='#00b894', width=3)), row=3, col=1)
-        
-            fig_eff.update_layout(uirevision=True, height=700, margin=dict(t=30, b=20, l=40, r=40))
-            st.plotly_chart(fig_eff, use_container_width=True)
-        
-        with c_data:
-            st.markdown("#### 🔮 Forecast Details")
-            st.write("The **LSTM Neural Network** uses historical irradiance and temperature sequences to predict upcoming panel efficiency capabilities.")
-            st.dataframe(df_solar[['timestamp', 'Efficiency_Forecast']].tail(8).style.format({"Efficiency_Forecast": "{:.2f}%"}), use_container_width=True)
-        
-            st.markdown("---")
-            st.markdown("#### ⚙️ Array Controls")
-            st.button("⚙️ Trigger Inverter Reset", use_container_width=True)
-            st.button("🧼 Dispatch Cleaning Drone", use_container_width=True)
-            st.info("ℹ️ Optimization Tip: Tilt angle on Row 4 is suboptimal. Use auto-adjust to gain ~2% efficiency.")
-            if st.button("📐 Auto-Adjust Trackers", type="primary", use_container_width=True):
-                 with st.spinner("Aligning panels..."):
-                     time.sleep(1)
-                     st.success("Panels aligned to optimal incidence angle.")
-
-    with tab_special:
-        st.markdown("### 🔐 Restricted Area: Advanced Analyst Tools")
-    
-        # Session state for auth
-        if 'auth_special' not in st.session_state:
-            st.session_state.auth_special = False
-        
-        password = st.text_input("Enter Access Code", type="password", key="special_pw")
-    
-        if password == "omnox123":
-            st.session_state.auth_special = True
-            st.success("Access Granted: Advanced Analytics Loaded")
-        elif password and password != "omnox123":
-            st.error("Invalid Access Code")
-        
-        if st.session_state.auth_special:
-            st.markdown("---")
-            st.subheader("📊 2D Analysis Suite")
-            st.markdown("Comprehensive 2-dimensional visualizations for deep-dive diagnostics.")
-        
-            # Layout for 2D graphs (Grid 2x5)
-            for i in range(5):
-                c1, c2 = st.columns(2)
-            
-                # Graph 2*i + 1
-                with c1:
-                    idx = 2 * i + 1
-                    if idx == 1:
-                        # 1. Histogram of Power Distribution
-                        fig = px.histogram(df_wind, x="Power_MW", nbins=20, title="1. Power Output Distribution", color_discrete_sequence=['#636EFA'])
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Analyzes the frequency of power output levels to identify optimal operating ranges.")
-                    elif idx == 3:
-                         # 3. Scatter: Wind Speed vs Power
-                        fig = px.scatter(df_wind, x="Wind_Speed_m_s", y="Power_MW", title="3. Wind Speed vs. Power Curve", color="Power_MW", color_continuous_scale="Viridis")
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Validates the turbine's power curve against theoretical performance models.")
-                    elif idx == 5:
-                        # 5. Box Plot: Vibration Analysis
-                        fig = px.box(df_wind, y="Vibration_mm_s", title="5. Vibration Amplitude Spread", color_discrete_sequence=['#EF553B'])
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Detects outliers in vibration telemetry that indicate mechanical looseness.")
-                    elif idx == 7:
-                        # 7. Area Chart: Cumulative Energy
-                        df_wind['Cumulative_Energy'] = df_wind['Power_MW'].cumsum()
-                        fig = px.area(df_wind, x="timestamp", y="Cumulative_Energy", title="7. Cumulative Energy Production", color_discrete_sequence=['#00CC96'])
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Tracks total energy yield over the session to verify target milestones.")
-                    elif idx == 9:
-                        # 9. Bar Chart: Power distribution 
-                        df_wind['hour'] = df_wind['timestamp'].dt.strftime('%H:%M')
-                        recent_hours = df_wind.groupby('hour')['Power_MW'].mean().reset_index().tail(10)
-                        fig = px.bar(recent_hours, x="hour", y="Power_MW", title="9. Recent Power Averages", color="Power_MW", color_continuous_scale="Reds")
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Visualizes short-term power production trends.")
-
-                # Graph 2*i + 2
-                with c2:
-                    idx = 2 * i + 2
-                    if idx == 2:
-                        # 2. Line: Component Temp Trends
-                        fig = px.line(df_wind, x="timestamp", y=["Gearbox_Temp_C"], title="2. Gearbox Thermal Trend", color_discrete_sequence=['#AB63FA'])
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Monitors thermal stability to prevent overheating events.")
-                    elif idx == 4:
-                        # 4. Correlation Matrix Heatmap
-                        corr = df_wind.select_dtypes(include=[np.number]).tail(100).corr()
-                        fig = px.imshow(corr, title="4. Telemetry Correlation Heatmap", color_continuous_scale="Viridis")
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Identifies interdependent anomalies across the turbine sensor suite.")
-                    elif idx == 6:
-                        # 6. Violin: Efficiency Distribution
-                        fig = px.violin(df_solar, y="Efficiency_Forecast", box=True, points="all", title="6. Solar Efficiency Variability", color_discrete_sequence=['#FFA15A'])
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Visualizes the spread and consistency of panel efficiency predictions.")
-                    elif idx == 8:
-                        # 8. Pie Chart: Asset State
-                        fault_col = 'is_fault' if 'is_fault' in df_wind.columns else 'Failure_Prob'
-                        if fault_col == 'is_fault':
-                            states = df_wind['is_fault'].map({0: 'Normal', 1: 'Fault'}).value_counts().reset_index()
-                        else:
-                            states = pd.DataFrame({'State': ['Normal', 'Warning', 'Fault'], 'Count': [(df_wind['Failure_Prob']<0.4).sum(), ((df_wind['Failure_Prob']>=0.4)&(df_wind['Failure_Prob']<0.7)).sum(), (df_wind['Failure_Prob']>=0.7).sum()]})
-                        states.columns = ['State', 'Count']
-                        fig = px.pie(states, values='Count', names='State', title="8. Recent Status Distribution", hole=0.3)
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Provides a high-level snapshot of fleet availability base on live metrics.")
-                    elif idx == 10:
-                        # 10. Radar Chart: Performance Metrics
-                        features = ['Power_MW', 'Wind_Speed_m_s', 'Gearbox_Temp_C', 'Vibration_mm_s', 'Failure_Prob']
-                        norm_wind = df_wind[features].iloc[-1]
-                        norm_max = df_wind[features].max().replace(0, 1) # Prevent div by 0
-                        metrics = pd.DataFrame({'r': (norm_wind / norm_max).values * 100, 'theta': features})
-                        fig = px.line_polar(metrics, r='r', theta='theta', line_close=True, title="10. Current Telemetry (Normalized %)")
-                        fig.update_traces(fill='toself')
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("**Role:** Evaluates current operational health across multiple metrics relative to session highs.")
-
-            st.markdown("---")
-            st.subheader("🧊 3D Dimensional Analysis")
-            st.markdown("Interactive 3D models for complex spatial and multi-variable analysis. **Press buttons to load.**")
-        
-            # 3D Graph Buttons
-            c3d_1, c3d_2, c3d_3, c3d_4, c3d_5 = st.columns(5)
-        
-            if c3d_1.button("Show 3D Vibration Map"):
-                # 1. 3D Scatter
-                z_data = df_wind['Vibration_mm_s']
-                x_data = df_wind['Rotor_Speed_RPM']
-                y_data = df_wind['Power_MW']
-                fig = px.scatter_3d(x=x_data, y=y_data, z=z_data, color=z_data, title="3D Vibration vs Speed vs Power", labels={'x':'RPM', 'y':'MW', 'z':'Vibration'})
-                st.plotly_chart(fig, use_container_width=True)
-                st.info("Correlates vibration intensity with rotor speed and power output in 3D space.")
-
-            if c3d_2.button("Show Power Surface"):
-                # 2. 3D Surface
-                from scipy.interpolate import griddata
-                x = df_wind['Wind_Speed_m_s'].values
-                y = df_wind['Rotor_Speed_RPM'].values
-                z = df_wind['Power_MW'].values
-                xi = np.linspace(x.min(), x.max(), 20)
-                yi = np.linspace(y.min(), y.max(), 20)
-                X, Y = np.meshgrid(xi, yi)
-                if len(set(x)) > 3 and len(set(y)) > 3:
-                    Z = griddata((x, y), z, (X, Y), method='linear')
-                    fig = go.Figure(data=[go.Surface(z=Z, x=xi, y=yi)])
-                    fig.update_layout(uirevision=True, title='Wind vs Rotor Speed vs Power Surface', autosize=True)
-                    st.plotly_chart(fig, use_container_width=True)
-                    st.info("Visualizes real-time power curve topology across wind and rotor speeds.")
-                else:
-                    st.warning("Not enough variance in live data to generate a dynamic surface yet. Let simulation run.")
-
-            if c3d_3.button("Show Solar Plot"):
-                # 3. 3D Mesh
-                fig = px.scatter_3d(df_solar, x=irr_key, y=temp_key, z='Power_MW', color='Efficiency_Forecast')
-                fig.update_layout(uirevision=True, title='Solar Output vs Environment 3D')
-                st.plotly_chart(fig, use_container_width=True)
-                st.info("Maps actual irradiance and temperature against resulting power output and predicted efficiency.")
-
-            if c3d_4.button("Show Trajectory Analysis"):
-                # 4. 3D Line
-                fig = px.line_3d(df_wind.tail(60), x='Wind_Speed_m_s', y='Rotor_Speed_RPM', z='Power_MW', title="Turbine Operational Trajectory")
-                st.plotly_chart(fig, use_container_width=True)
-                st.info("Tracks the precise path of turbine operation over time as environmental conditions shift.")
-
-            if c3d_5.button("Show Anomaly Probability Volume"):
-                # 5. 3D Volume
-                fig = px.scatter_3d(df_wind, x='Gearbox_Temp_C', y='Vibration_mm_s', z='Failure_Prob', color='Failure_Prob', 
-                                    title="Failure Likelihood Volume Space", range_color=[0, 1])
-                st.plotly_chart(fig, use_container_width=True)
-                st.info("Volume map plotting fault probability against physical vibration and thermal triggers.")
-
-    # ==================== Footer ====================
+# ==================== Alert Banner ====================
+alerts = get_alerts(df_wind)
+if alerts:
+    st.error(f"🚨 ACTIVE INTELLIGENCE ALERTS ({len(alerts)})")
+    for a in alerts:
+        icon = "🔴" if a['severity'] == "Critical" else "⚠️"
+        st.markdown(f"**{icon} {a['asset']}**: {a['msg']} — *{a['time']}*")
     st.markdown("---")
-    st.caption(f"System Heartbeat: Online | AI Models: Active | Local Time: {datetime.now().strftime('%H:%M:%S')}")
+
+tab_wind, tab_solar, tab_special = st.tabs(["🌪️ Wind Fleet", "☀️ Solar Fleet", "🔐 Special Analysis"])
+
+with tab_wind:
+    # Quick Stats Row
+    k1, k2, k3, k4 = st.columns(4)
+    curr_wind = df_wind.iloc[-1]
+    prev_wind = df_wind.iloc[-2]
+    k1.metric("Avg Wind Speed", f"{curr_wind['Wind_Speed_m_s']:.1f} m/s", f"{curr_wind['Wind_Speed_m_s'] - prev_wind['Wind_Speed_m_s']:.1f} m/s")
+    k2.metric("Active Power", f"{curr_wind['Power_MW']:.1f} MW", f"{curr_wind['Power_MW'] - prev_wind['Power_MW']:.1f} MW")
+    k3.metric("Vibration Level", f"{curr_wind['Vibration_mm_s']:.3f} mm/s", f"{curr_wind['Vibration_mm_s'] - prev_wind['Vibration_mm_s']:.3f} mm/s", delta_color="inverse")
+
+    # ML Insight Card
+    current_risk = df_wind.iloc[-1]['Failure_Prob']
+    risk_color = "normal" if current_risk < 0.4 else "off"
+    k4.metric("ML Failure Risk", f"{current_risk*100:.1f}%", f"{(current_risk - df_wind.iloc[-2]['Failure_Prob'])*100:.1f}%", delta_color=risk_color)
+
+    st.markdown("### 📡 Live Telemetry & ML Predictions: Turbine WT-04")
+
+    # Real-time charts
+    col_charts, col_ctrl = st.columns([3, 1])
+
+    with col_charts:
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08, 
+                            subplot_titles=("Power Output (MW)", "Sensor Telemetry", "Real-time Failure Probability (ML Output)"))
+    
+        # 1. Power
+        fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#0ea5e9')), row=1, col=1)
+    
+        # 2. Vibration & Temp
+        fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Vibration_mm_s'], name="Vibration", line=dict(color='#ef4444')), row=2, col=1)
+        fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Gearbox_Temp_C']/10, name="Temp (scaled)", line=dict(color='orange', dash='dot')), row=2, col=1)
+    
+        # 3. ML Prediction
+        fig.add_trace(go.Scatter(x=df_wind['timestamp'], y=df_wind['Failure_Prob'], name="Failure Prob.", line=dict(color='#8b5cf6', width=3)), row=3, col=1)
+    
+        # Add risk zones to ML chart
+        fig.add_hrect(y0=0, y1=0.4, fillcolor="green", opacity=0.1, row=3, col=1)
+        fig.add_hrect(y0=0.4, y1=0.7, fillcolor="yellow", opacity=0.1, row=3, col=1)
+        fig.add_hrect(y0=0.7, y1=1.0, fillcolor="red", opacity=0.1, row=3, col=1)
+    
+        fig.update_layout(uirevision=True, height=700, margin=dict(t=30, b=20, l=40, r=40))
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col_ctrl:
+        st.markdown("#### 🧠 Model Insights")
+        st.info(f"The **Random Forest Classifier** is analyzing real-time vibration and temperature data.")
+    
+        if current_risk > 0.5:
+            st.warning("⚠️ **High Risk Factor:** Abnormal vibration patterns detected. Correlated with gearbox usage.")
+        else:
+            st.success("✅ **System Nominal:** Models predict stable operation for next 24h.")
+        
+        st.markdown("---")
+        st.markdown("#### ⚙️ Quick Actions")
+        st.button("🛑 Emergency Stop", type="primary", use_container_width=True)
+        st.button("🔄 Reset Yaw System", use_container_width=True)
+        st.button("🔧 Flag for Inspection", use_container_width=True)
+
+with tab_solar:
+    # Quick Stats
+    s1, s2, s3, s4 = st.columns(4)
+    curr_solar = df_solar.iloc[-1]
+    prev_solar = df_solar.iloc[-2]
+
+    # Safely get irradiance key
+    irr_key = 'irradiance' if 'irradiance' in curr_solar else 'Irradiance_W_m2'
+
+    s1.metric("Irradiance", f"{curr_solar[irr_key]:.0f} W/m²", f"{curr_solar[irr_key] - prev_solar[irr_key]:.0f} W/m²")
+    s2.metric("DC Output", f"{curr_solar['Power_MW']:.1f} MW", f"{curr_solar['Power_MW'] - prev_solar['Power_MW']:.1f} MW")
+
+    forecast_eff = df_solar.iloc[-1]['Efficiency_Forecast']
+    prev_eff = df_solar.iloc[-2]['Efficiency_Forecast']
+    s3.metric("Efficiency Forecast (Next 1h)", f"{forecast_eff:.1f}%", f"{forecast_eff - prev_eff:.2f}%", help="Predicted by LSTM Model")
+
+    # Safely handle panel temperature
+    temp_key = 'panel_temperature' if 'panel_temperature' in curr_solar else 'Panel_Temp_C'
+    s4.metric("Panel Temp", f"{curr_solar[temp_key]:.1f} °C", f"{curr_solar[temp_key] - prev_solar[temp_key]:.1f} °C", delta_color="inverse")
+
+    st.markdown("### ☀️ Solar Efficiency Forecasting (LSTM Model)")
+
+    c_map, c_data = st.columns([3, 1])
+
+    with c_map:
+        fig_eff = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08, 
+                            subplot_titles=("Solar Power Output (MW)", "Environment (Irradiance W/m² & Temp)", "Predicted Panel Efficiency (%)"))
+    
+        # 1. Power Output
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Power_MW'], name="Power (MW)", fill='tozeroy', line=dict(color='#eab308')), row=1, col=1)
+    
+        # 2. Environment (Irradiance and Temperature)
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[irr_key], name="Irradiance", line=dict(color='#f97316')), row=2, col=1)
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar[temp_key]*10, name="Panel Temp (*10 °C)", line=dict(color='#ef4444', dash='dot')), row=2, col=1)
+    
+        # 3. Efficiency Forecast
+        fig_eff.add_trace(go.Scatter(x=df_solar['timestamp'], y=df_solar['Efficiency_Forecast'], name="Forecasted Efficiency", line=dict(color='#00b894', width=3)), row=3, col=1)
+    
+        fig_eff.update_layout(uirevision=True, height=700, margin=dict(t=30, b=20, l=40, r=40))
+        st.plotly_chart(fig_eff, use_container_width=True)
+    
+    with c_data:
+        st.markdown("#### 🔮 Forecast Details")
+        st.write("The **LSTM Neural Network** uses historical irradiance and temperature sequences to predict upcoming panel efficiency capabilities.")
+        st.dataframe(df_solar[['timestamp', 'Efficiency_Forecast']].tail(8).style.format({"Efficiency_Forecast": "{:.2f}%"}), use_container_width=True)
+    
+        st.markdown("---")
+        st.markdown("#### ⚙️ Array Controls")
+        st.button("⚙️ Trigger Inverter Reset", use_container_width=True)
+        st.button("🧼 Dispatch Cleaning Drone", use_container_width=True)
+        st.info("ℹ️ Optimization Tip: Tilt angle on Row 4 is suboptimal. Use auto-adjust to gain ~2% efficiency.")
+        if st.button("📐 Auto-Adjust Trackers", type="primary", use_container_width=True):
+             with st.spinner("Aligning panels..."):
+                 time.sleep(1)
+                 st.success("Panels aligned to optimal incidence angle.")
+
+with tab_special:
+    st.markdown("### 🔐 Restricted Area: Advanced Analyst Tools")
+
+    # Session state for auth
+    if 'auth_special' not in st.session_state:
+        st.session_state.auth_special = False
+    
+    password = st.text_input("Enter Access Code", type="password", key="special_pw")
+
+    if password == "omnox123":
+        st.session_state.auth_special = True
+        st.success("Access Granted: Advanced Analytics Loaded")
+    elif password and password != "omnox123":
+        st.error("Invalid Access Code")
+    
+    if st.session_state.auth_special:
+        st.markdown("---")
+        st.subheader("📊 2D Analysis Suite")
+        st.markdown("Comprehensive 2-dimensional visualizations for deep-dive diagnostics.")
+    
+        # Layout for 2D graphs (Grid 2x5)
+        for i in range(5):
+            c1, c2 = st.columns(2)
+        
+            # Graph 2*i + 1
+            with c1:
+                idx = 2 * i + 1
+                if idx == 1:
+                    # 1. Histogram of Power Distribution
+                    fig = px.histogram(df_wind, x="Power_MW", nbins=20, title="1. Power Output Distribution", color_discrete_sequence=['#636EFA'])
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Analyzes the frequency of power output levels to identify optimal operating ranges.")
+                elif idx == 3:
+                     # 3. Scatter: Wind Speed vs Power
+                    fig = px.scatter(df_wind, x="Wind_Speed_m_s", y="Power_MW", title="3. Wind Speed vs. Power Curve", color="Power_MW", color_continuous_scale="Viridis")
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Validates the turbine's power curve against theoretical performance models.")
+                elif idx == 5:
+                    # 5. Box Plot: Vibration Analysis
+                    fig = px.box(df_wind, y="Vibration_mm_s", title="5. Vibration Amplitude Spread", color_discrete_sequence=['#EF553B'])
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Detects outliers in vibration telemetry that indicate mechanical looseness.")
+                elif idx == 7:
+                    # 7. Area Chart: Cumulative Energy
+                    df_wind['Cumulative_Energy'] = df_wind['Power_MW'].cumsum()
+                    fig = px.area(df_wind, x="timestamp", y="Cumulative_Energy", title="7. Cumulative Energy Production", color_discrete_sequence=['#00CC96'])
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Tracks total energy yield over the session to verify target milestones.")
+                elif idx == 9:
+                    # 9. Bar Chart: Power distribution 
+                    df_wind['hour'] = df_wind['timestamp'].dt.strftime('%H:%M')
+                    recent_hours = df_wind.groupby('hour')['Power_MW'].mean().reset_index().tail(10)
+                    fig = px.bar(recent_hours, x="hour", y="Power_MW", title="9. Recent Power Averages", color="Power_MW", color_continuous_scale="Reds")
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Visualizes short-term power production trends.")
+
+            # Graph 2*i + 2
+            with c2:
+                idx = 2 * i + 2
+                if idx == 2:
+                    # 2. Line: Component Temp Trends
+                    fig = px.line(df_wind, x="timestamp", y=["Gearbox_Temp_C"], title="2. Gearbox Thermal Trend", color_discrete_sequence=['#AB63FA'])
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Monitors thermal stability to prevent overheating events.")
+                elif idx == 4:
+                    # 4. Correlation Matrix Heatmap
+                    corr = df_wind.select_dtypes(include=[np.number]).tail(100).corr()
+                    fig = px.imshow(corr, title="4. Telemetry Correlation Heatmap", color_continuous_scale="Viridis")
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Identifies interdependent anomalies across the turbine sensor suite.")
+                elif idx == 6:
+                    # 6. Violin: Efficiency Distribution
+                    fig = px.violin(df_solar, y="Efficiency_Forecast", box=True, points="all", title="6. Solar Efficiency Variability", color_discrete_sequence=['#FFA15A'])
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Visualizes the spread and consistency of panel efficiency predictions.")
+                elif idx == 8:
+                    # 8. Pie Chart: Asset State
+                    fault_col = 'is_fault' if 'is_fault' in df_wind.columns else 'Failure_Prob'
+                    if fault_col == 'is_fault':
+                        states = df_wind['is_fault'].map({0: 'Normal', 1: 'Fault'}).value_counts().reset_index()
+                    else:
+                        states = pd.DataFrame({'State': ['Normal', 'Warning', 'Fault'], 'Count': [(df_wind['Failure_Prob']<0.4).sum(), ((df_wind['Failure_Prob']>=0.4)&(df_wind['Failure_Prob']<0.7)).sum(), (df_wind['Failure_Prob']>=0.7).sum()]})
+                    states.columns = ['State', 'Count']
+                    fig = px.pie(states, values='Count', names='State', title="8. Recent Status Distribution", hole=0.3)
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Provides a high-level snapshot of fleet availability base on live metrics.")
+                elif idx == 10:
+                    # 10. Radar Chart: Performance Metrics
+                    features = ['Power_MW', 'Wind_Speed_m_s', 'Gearbox_Temp_C', 'Vibration_mm_s', 'Failure_Prob']
+                    norm_wind = df_wind[features].iloc[-1]
+                    norm_max = df_wind[features].max().replace(0, 1) # Prevent div by 0
+                    metrics = pd.DataFrame({'r': (norm_wind / norm_max).values * 100, 'theta': features})
+                    fig = px.line_polar(metrics, r='r', theta='theta', line_close=True, title="10. Current Telemetry (Normalized %)")
+                    fig.update_traces(fill='toself')
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("**Role:** Evaluates current operational health across multiple metrics relative to session highs.")
+
+        st.markdown("---")
+        st.subheader("🧊 3D Dimensional Analysis")
+        st.markdown("Interactive 3D models for complex spatial and multi-variable analysis. **Press buttons to load.**")
+    
+        # 3D Graph Buttons
+        c3d_1, c3d_2, c3d_3, c3d_4, c3d_5 = st.columns(5)
+    
+        if c3d_1.button("Show 3D Vibration Map"):
+            # 1. 3D Scatter
+            z_data = df_wind['Vibration_mm_s']
+            x_data = df_wind['Rotor_Speed_RPM']
+            y_data = df_wind['Power_MW']
+            fig = px.scatter_3d(x=x_data, y=y_data, z=z_data, color=z_data, title="3D Vibration vs Speed vs Power", labels={'x':'RPM', 'y':'MW', 'z':'Vibration'})
+            st.plotly_chart(fig, use_container_width=True)
+            st.info("Correlates vibration intensity with rotor speed and power output in 3D space.")
+
+        if c3d_2.button("Show Power Surface"):
+            # 2. 3D Surface
+            from scipy.interpolate import griddata
+            x = df_wind['Wind_Speed_m_s'].values
+            y = df_wind['Rotor_Speed_RPM'].values
+            z = df_wind['Power_MW'].values
+            xi = np.linspace(x.min(), x.max(), 20)
+            yi = np.linspace(y.min(), y.max(), 20)
+            X, Y = np.meshgrid(xi, yi)
+            if len(set(x)) > 3 and len(set(y)) > 3:
+                Z = griddata((x, y), z, (X, Y), method='linear')
+                fig = go.Figure(data=[go.Surface(z=Z, x=xi, y=yi)])
+                fig.update_layout(uirevision=True, title='Wind vs Rotor Speed vs Power Surface', autosize=True)
+                st.plotly_chart(fig, use_container_width=True)
+                st.info("Visualizes real-time power curve topology across wind and rotor speeds.")
+            else:
+                st.warning("Not enough variance in live data to generate a dynamic surface yet. Let simulation run.")
+
+        if c3d_3.button("Show Solar Plot"):
+            # 3. 3D Mesh
+            fig = px.scatter_3d(df_solar, x=irr_key, y=temp_key, z='Power_MW', color='Efficiency_Forecast')
+            fig.update_layout(uirevision=True, title='Solar Output vs Environment 3D')
+            st.plotly_chart(fig, use_container_width=True)
+            st.info("Maps actual irradiance and temperature against resulting power output and predicted efficiency.")
+
+        if c3d_4.button("Show Trajectory Analysis"):
+            # 4. 3D Line
+            fig = px.line_3d(df_wind.tail(60), x='Wind_Speed_m_s', y='Rotor_Speed_RPM', z='Power_MW', title="Turbine Operational Trajectory")
+            st.plotly_chart(fig, use_container_width=True)
+            st.info("Tracks the precise path of turbine operation over time as environmental conditions shift.")
+
+        if c3d_5.button("Show Anomaly Probability Volume"):
+            # 5. 3D Volume
+            fig = px.scatter_3d(df_wind, x='Gearbox_Temp_C', y='Vibration_mm_s', z='Failure_Prob', color='Failure_Prob', 
+                                title="Failure Likelihood Volume Space", range_color=[0, 1])
+            st.plotly_chart(fig, use_container_width=True)
+            st.info("Volume map plotting fault probability against physical vibration and thermal triggers.")
+
+# ==================== Footer ====================
+st.markdown("---")
+st.caption(f"System Heartbeat: Online | AI Models: Active | Local Time: {datetime.now().strftime('%H:%M:%S')}")
 
 
 
-live_operations_loop()
+
+# ==================== Auto Refresh Logic ====================
+if auto_refresh:
+    time.sleep(refresh_rate)
+    st.rerun()
